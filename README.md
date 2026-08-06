@@ -3,8 +3,8 @@
 Public, SEO-first vehicle discovery site for the Vehicle Listing
 Platform. Independent repo/Vercel project/domain from the
 [Admin + Lister Portal](../admin) — same Supabase project, but this app
-is deliberately **read-mostly**: no service-role key, no Cloudflare
-upload token. See [`../06-liquid-glass-style.md`](../06-liquid-glass-style.md)
+is deliberately **read-mostly**: no service-role key, no R2 write
+credentials. See [`../06-liquid-glass-style.md`](../06-liquid-glass-style.md)
 for the design system and the root-level `NN-*.md` docs for full product
 specs.
 
@@ -12,7 +12,8 @@ specs.
 
 Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · shadcn/ui ·
 React Hook Form + Zod · TanStack Query · Zustand · Framer Motion ·
-Supabase (Auth, Postgres, Realtime, RLS) · Cloudflare CDN · Upstash Redis
+Supabase (Auth, Postgres, Realtime, RLS) · Cloudflare R2 + CDN (custom
+domain, read-only here) · Upstash Redis
 
 ## Getting started
 
@@ -30,9 +31,9 @@ pnpm dev --port 3001
 ## Environment variables
 
 See [`.env.example`](.env.example). This app only ever holds the anon
-key — no service-role key, no Cloudflare upload token, by design. Image
-uploads happen exclusively in the admin app; this app only renders the
-resulting CDN URLs.
+key and the public `IMAGES_CDN_URL` — no service-role key, no R2 write
+credentials, by design. Image uploads happen exclusively in the admin
+app (presigned R2 URLs); this app only renders the resulting CDN URLs.
 
 ## Access model
 

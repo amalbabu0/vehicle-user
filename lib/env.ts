@@ -4,25 +4,36 @@ import * as z from "zod";
 /**
  * Server-side env schema for the User website.
  * This app is deliberately scoped to read-mostly access: no Supabase
- * service-role key, no Cloudflare upload token — only the anon key (RLS
+ * service-role key, no R2 write credentials — only the anon key (RLS
  * grants it read on published listings + writes on the caller's own
- * favorites/enquiries/profile rows) and the public Images delivery hash.
+ * favorites/enquiries/profile rows) and the public images CDN URL.
+ *
+ * None of these are NEXT_PUBLIC_-prefixed, including the 5 that the browser
+ * ultimately needs (SUPABASE_URL, SUPABASE_ANON_KEY, IMAGES_CDN_URL,
+ * TURNSTILE_SITE_KEY, SITE_URL). Those 5 are handed to the client at runtime
+ * via app/api/public-config/route.ts instead of being inlined into the JS
+ * bundle at build time — see components/providers and lib/config. This does
+ * not make them secret (the browser still receives them), it only changes
+ * *when* and *how* — they're meant to be visible to visitors either way.
+ *
+ * Images live in Cloudflare R2 (see admin app for why, not Cloudflare
+ * Images). This app only ever gets the public custom-domain CDN URL —
+ * no R2 access keys, no upload path, matching the read-only split.
  */
 const envSchema = z.object({
-  NEXT_PUBLIC_SUPABASE_URL: z.url(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+  SUPABASE_URL: z.url(),
+  SUPABASE_ANON_KEY: z.string().min(1),
 
-  NEXT_PUBLIC_CLOUDFLARE_IMAGES_HASH: z.string().min(1),
+  // Public custom domain connected to the R2 bucket, e.g. https://cdn.example.com
+  IMAGES_CDN_URL: z.url(),
 
   UPSTASH_REDIS_REST_URL: z.url(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
 
-  NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().min(1),
+  TURNSTILE_SITE_KEY: z.string().min(1),
   TURNSTILE_SECRET_KEY: z.string().min(1),
 
-  SESSION_SECRET: z.string().min(32),
-
-  NEXT_PUBLIC_SITE_URL: z.url(),
+  SITE_URL: z.url(),
 });
 
 export type Env = z.infer<typeof envSchema>;
