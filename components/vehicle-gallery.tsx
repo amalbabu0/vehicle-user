@@ -5,7 +5,9 @@ import Image from "next/image";
 import { Car } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function VehicleGallery({ images, name }: { images: string[]; name: string }) {
+export type GalleryImage = { url: string; mediumUrl: string | null; thumbnailUrl: string | null };
+
+export function VehicleGallery({ images, name }: { images: GalleryImage[]; name: string }) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   if (images.length === 0) {
@@ -16,11 +18,13 @@ export function VehicleGallery({ images, name }: { images: string[]; name: strin
     );
   }
 
+  const active = images[activeIndex];
+
   return (
     <div className="space-y-3">
       <div className="relative aspect-4/3 w-full overflow-hidden rounded-(--glass-radius-lg) bg-muted">
         <Image
-          src={images[activeIndex]}
+          src={active.mediumUrl ?? active.url}
           alt={`${name} — photo ${activeIndex + 1}`}
           fill
           priority
@@ -32,17 +36,17 @@ export function VehicleGallery({ images, name }: { images: string[]; name: strin
         <div className="flex gap-2 overflow-x-auto pb-1">
           {images.map((image, index) => (
             <button
-              key={image}
+              key={image.url}
               type="button"
               onClick={() => setActiveIndex(index)}
-              aria-label={`View photo ${index + 1}`}
+              aria-label={`View photo ${index + 1} of ${name}`}
               aria-current={index === activeIndex}
               className={cn(
                 "relative size-16 shrink-0 overflow-hidden rounded-lg border-2 transition",
                 index === activeIndex ? "border-primary" : "border-transparent opacity-70 hover:opacity-100"
               )}
             >
-              <Image src={image} alt="" fill sizes="64px" className="object-cover" />
+              <Image src={image.thumbnailUrl ?? image.url} alt="" fill sizes="64px" className="object-cover" />
             </button>
           ))}
         </div>

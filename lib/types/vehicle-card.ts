@@ -13,6 +13,7 @@ export type VehicleCardData = {
   districtName: string | null;
   locationName: string | null;
   coverImageUrl: string | null;
+  coverThumbnailUrl: string | null;
   viewCount: number;
   publishedAt: string | null;
   verified: boolean;

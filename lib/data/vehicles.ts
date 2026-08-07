@@ -8,7 +8,7 @@ export const VEHICLE_CARD_SELECT = `
   id, slug, name, model, registration_year, fuel_type, transmission, km_driven,
   lease_amount, lease_period, view_count, published_at, approved_by, location_id,
   brands ( name ),
-  vehicle_images ( url, is_cover, sort_order )
+  vehicle_images ( url, thumbnail_url, is_cover, sort_order )
 `;
 
 type VehicleCardRow = {
@@ -27,7 +27,7 @@ type VehicleCardRow = {
   approved_by: string | null;
   location_id: string | null;
   brands: { name: string } | null;
-  vehicle_images: { url: string; is_cover: boolean; sort_order: number }[];
+  vehicle_images: { url: string; thumbnail_url: string | null; is_cover: boolean; sort_order: number }[];
 };
 
 export function mapVehicleRowToCard(row: VehicleCardRow, locations: LocationLookup): VehicleCardData {
@@ -51,6 +51,7 @@ export function mapVehicleRowToCard(row: VehicleCardRow, locations: LocationLook
     districtName: location?.districtName ?? null,
     locationName: location?.name ?? null,
     coverImageUrl: cover?.url ?? null,
+    coverThumbnailUrl: cover?.thumbnail_url ?? null,
     viewCount: row.view_count,
     publishedAt: row.published_at,
     verified: row.approved_by !== null,
@@ -98,7 +99,7 @@ export type VehicleDetail = VehicleCardData & {
   color: string | null;
   features: string[];
   serviceChargePercent: number | null;
-  images: string[];
+  images: { url: string; mediumUrl: string | null; thumbnailUrl: string | null }[];
 };
 
 const VEHICLE_DETAIL_SELECT = `
@@ -107,10 +108,10 @@ const VEHICLE_DETAIL_SELECT = `
   description, contact_phone, direct_owner, condition, engine_capacity, seats, color,
   features, service_charge_percent,
   brands ( name ),
-  vehicle_images ( url, is_cover, sort_order )
+  vehicle_images ( url, medium_url, thumbnail_url, is_cover, sort_order )
 `;
 
-type VehicleDetailRow = VehicleCardRow & {
+type VehicleDetailRow = Omit<VehicleCardRow, "vehicle_images"> & {
   description: string | null;
   contact_phone: string;
   direct_owner: boolean;
@@ -120,6 +121,7 @@ type VehicleDetailRow = VehicleCardRow & {
   color: string | null;
   features: string[];
   service_charge_percent: number | null;
+  vehicle_images: { url: string; medium_url: string | null; thumbnail_url: string | null; is_cover: boolean; sort_order: number }[];
 };
 
 export async function getVehicleBySlug(slug: string): Promise<VehicleDetail | null> {
@@ -143,7 +145,9 @@ export async function getVehicleBySlug(slug: string): Promise<VehicleDetail | nu
     color: row.color,
     features: row.features ?? [],
     serviceChargePercent: row.service_charge_percent,
-    images: [...row.vehicle_images].sort((a, b) => a.sort_order - b.sort_order).map((image) => image.url),
+    images: [...row.vehicle_images]
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((image) => ({ url: image.url, mediumUrl: image.medium_url, thumbnailUrl: image.thumbnail_url })),
   };
 }
 

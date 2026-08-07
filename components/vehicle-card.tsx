@@ -15,6 +15,13 @@ export function VehicleCard({
    * context — see components/favorite-button.tsx. */
   favorited?: boolean;
 }) {
+  const cardImageUrl = vehicle.coverThumbnailUrl ?? vehicle.coverImageUrl;
+  // Descriptive rather than generic — e.g. "2022 Hyundai Creta SX Diesel in
+  // Kozhikode" — composed only from fields this card actually has.
+  const altText = [vehicle.registrationYear, vehicle.name, vehicle.fuelType, vehicle.districtName ? `in ${vehicle.districtName}` : null]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div className="glass-surface glass-specular group relative overflow-hidden rounded-(--glass-radius-lg) transition duration-300 hover:-translate-y-1 hover:shadow-xl">
       <div className="absolute right-3 top-3 z-10">
@@ -23,12 +30,12 @@ export function VehicleCard({
 
       <Link href={`/vehicles/${vehicle.slug}`} className="block text-foreground no-underline">
         <div className="relative aspect-4/3 w-full overflow-hidden bg-muted">
-          {vehicle.coverImageUrl ? (
+          {cardImageUrl ? (
             <Image
-              src={vehicle.coverImageUrl}
-              alt={vehicle.name}
+              src={cardImageUrl}
+              alt={altText}
               fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 50vw, 25vw"
               className="object-cover transition duration-300 group-hover:scale-105"
             />
           ) : (
