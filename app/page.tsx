@@ -4,11 +4,7 @@ import { Footer } from "@/components/footer";
 import { Hero } from "@/components/hero";
 import { FeaturedVehicles } from "@/components/sections/featured-vehicles";
 import { LatestVehicles } from "@/components/sections/latest-vehicles";
-import { BrowseByCategory } from "@/components/sections/browse-by-category";
-import { BrowseByBrand } from "@/components/sections/browse-by-brand";
-import { BrowseByDistrict } from "@/components/sections/browse-by-district";
 import { WhyUs } from "@/components/sections/why-us";
-import { PopularSearches } from "@/components/sections/popular-searches";
 import { Testimonials } from "@/components/sections/testimonials";
 import { Faq } from "@/components/sections/faq";
 import { VehicleSectionSkeleton } from "@/components/sections/section-skeleton";
@@ -30,26 +26,10 @@ export default function HomePage() {
           <FeaturedVehicles />
         </Suspense>
 
-        <Suspense fallback={null}>
-          <BrowseByCategory />
-        </Suspense>
-
-        <Suspense fallback={null}>
-          <BrowseByBrand />
-        </Suspense>
-
-        <Suspense fallback={null}>
-          <BrowseByDistrict />
-        </Suspense>
-
         <WhyUs />
 
         <Suspense fallback={<VehicleSectionSkeleton />}>
           <LatestVehicles />
-        </Suspense>
-
-        <Suspense fallback={null}>
-          <PopularSearches />
         </Suspense>
 
         <Suspense fallback={null}>
