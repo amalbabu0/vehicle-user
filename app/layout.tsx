@@ -5,20 +5,53 @@ import { Geist } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { cn } from "@/lib/utils";
 import { AppProviders } from "@/components/providers/app-providers";
+import { SiteJsonLd } from "@/components/seo/site-jsonld";
+import { env } from "@/lib/env";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
+const SITE_NAME = "Kerala Lease Hub";
+const SITE_DESCRIPTION =
+  "Kerala's trusted vehicle marketplace — buy, sell, and lease used cars and bikes directly from verified owners. No hidden charges, direct contact, fast listing approval.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(env.SITE_URL),
   title: {
-    default: "Vehicle Listing Platform",
-    template: "%s | Vehicle Listing Platform",
+    default: `${SITE_NAME} — Buy, Sell & Lease Used Cars & Bikes in Kerala`,
+    template: `%s | ${SITE_NAME}`,
   },
-  description: "Find and lease vehicles directly from owners near you.",
+  description: SITE_DESCRIPTION,
+  keywords: [
+    "used cars Kerala", "buy used cars Kerala", "sell used cars Kerala", "used bikes Kerala",
+    "Kerala vehicle marketplace", "second hand cars", "second hand bikes", "Kerala Lease Hub",
+  ],
+  alternates: { canonical: "/" },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
+  },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} — Buy, Sell & Lease Used Cars & Bikes in Kerala`,
+    description: SITE_DESCRIPTION,
+    url: env.SITE_URL,
+    locale: "en_IN",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE_NAME} — Buy, Sell & Lease Used Cars & Bikes in Kerala`,
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={cn("font-sans", geist.variable)} suppressHydrationWarning>
+      <head>
+        <SiteJsonLd />
+      </head>
       <body>
         <AppProviders>{children}</AppProviders>
         <Analytics />

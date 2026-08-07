@@ -10,7 +10,8 @@ import { NextResponse, type NextRequest } from "next/server";
 // always the DAL (lib/auth/dal.ts) + RLS, this is only a UX shortcut.
 const AUTH_PATHS = ["/login", "/register"];
 const PROTECTED_PATHS: string[] = [
-  // "/favorites", "/enquiries", "/profile", "/settings" — added when built
+  "/favorites",
+  // "/enquiries", "/profile", "/settings" — added when built
 ];
 
 export async function proxy(request: NextRequest) {

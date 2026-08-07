@@ -1,0 +1,171 @@
+import { createClient } from "@/lib/supabase/server";
+import { getLocationLookup, type LocationLookup } from "@/lib/data/locations";
+import type { VehicleCardData } from "@/lib/types/vehicle-card";
+
+// Shared select for anything that renders a VehicleCard — published listings
+// only (RLS also enforces this, this just avoids over-fetching columns).
+export const VEHICLE_CARD_SELECT = `
+  id, slug, name, model, registration_year, fuel_type, transmission, km_driven,
+  lease_amount, lease_period, view_count, published_at, approved_by, location_id,
+  brands ( name ),
+  vehicle_images ( url, is_cover, sort_order )
+`;
+
+type VehicleCardRow = {
+  id: string;
+  slug: string;
+  name: string;
+  model: string | null;
+  registration_year: number | null;
+  fuel_type: string | null;
+  transmission: string | null;
+  km_driven: number | null;
+  lease_amount: number;
+  lease_period: string;
+  view_count: number;
+  published_at: string | null;
+  approved_by: string | null;
+  location_id: string | null;
+  brands: { name: string } | null;
+  vehicle_images: { url: string; is_cover: boolean; sort_order: number }[];
+};
+
+export function mapVehicleRowToCard(row: VehicleCardRow, locations: LocationLookup): VehicleCardData {
+  const location = row.location_id ? locations.get(row.location_id) : undefined;
+  const cover =
+    row.vehicle_images.find((image) => image.is_cover) ??
+    [...row.vehicle_images].sort((a, b) => a.sort_order - b.sort_order)[0];
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    brandName: row.brands?.name ?? null,
+    model: row.model,
+    registrationYear: row.registration_year,
+    fuelType: row.fuel_type,
+    transmission: row.transmission,
+    kmDriven: row.km_driven,
+    leaseAmount: row.lease_amount,
+    leasePeriod: row.lease_period,
+    districtName: location?.districtName ?? null,
+    locationName: location?.name ?? null,
+    coverImageUrl: cover?.url ?? null,
+    viewCount: row.view_count,
+    publishedAt: row.published_at,
+    verified: row.approved_by !== null,
+  };
+}
+
+export async function getVehicleCardsByIds(ids: string[]): Promise<VehicleCardData[]> {
+  if (ids.length === 0) return [];
+  const supabase = await createClient();
+  const [{ data }, locations] = await Promise.all([
+    supabase.from("vehicles").select(VEHICLE_CARD_SELECT).eq("status", "published").in("id", ids),
+    getLocationLookup(),
+  ]);
+  const rows = (data ?? []) as unknown as VehicleCardRow[];
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  // Preserve caller-specified order (e.g. featured_listing_ids curation order).
+  return ids
+    .map((id) => byId.get(id))
+    .filter((row): row is VehicleCardRow => Boolean(row))
+    .map((row) => mapVehicleRowToCard(row, locations));
+}
+
+export async function getLatestVehicles(limit: number, offset = 0): Promise<VehicleCardData[]> {
+  const supabase = await createClient();
+  const [{ data }, locations] = await Promise.all([
+    supabase
+      .from("vehicles")
+      .select(VEHICLE_CARD_SELECT)
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .range(offset, offset + limit - 1),
+    getLocationLookup(),
+  ]);
+  const rows = (data ?? []) as unknown as VehicleCardRow[];
+  return rows.map((row) => mapVehicleRowToCard(row, locations));
+}
+
+export type VehicleDetail = VehicleCardData & {
+  description: string | null;
+  contactPhone: string;
+  directOwner: boolean;
+  condition: string | null;
+  engineCapacity: string | null;
+  seats: number | null;
+  color: string | null;
+  features: string[];
+  serviceChargePercent: number | null;
+  images: string[];
+};
+
+const VEHICLE_DETAIL_SELECT = `
+  id, slug, name, model, registration_year, fuel_type, transmission, km_driven,
+  lease_amount, lease_period, view_count, published_at, approved_by, location_id,
+  description, contact_phone, direct_owner, condition, engine_capacity, seats, color,
+  features, service_charge_percent,
+  brands ( name ),
+  vehicle_images ( url, is_cover, sort_order )
+`;
+
+type VehicleDetailRow = VehicleCardRow & {
+  description: string | null;
+  contact_phone: string;
+  direct_owner: boolean;
+  condition: string | null;
+  engine_capacity: string | null;
+  seats: number | null;
+  color: string | null;
+  features: string[];
+  service_charge_percent: number | null;
+};
+
+export async function getVehicleBySlug(slug: string): Promise<VehicleDetail | null> {
+  const supabase = await createClient();
+  const [{ data }, locations] = await Promise.all([
+    supabase.from("vehicles").select(VEHICLE_DETAIL_SELECT).eq("status", "published").eq("slug", slug).maybeSingle(),
+    getLocationLookup(),
+  ]);
+  if (!data) return null;
+
+  const row = data as unknown as VehicleDetailRow;
+  const card = mapVehicleRowToCard(row, locations);
+  return {
+    ...card,
+    description: row.description,
+    contactPhone: row.contact_phone,
+    directOwner: row.direct_owner,
+    condition: row.condition,
+    engineCapacity: row.engine_capacity,
+    seats: row.seats,
+    color: row.color,
+    features: row.features ?? [],
+    serviceChargePercent: row.service_charge_percent,
+    images: [...row.vehicle_images].sort((a, b) => a.sort_order - b.sort_order).map((image) => image.url),
+  };
+}
+
+/** RLS blocks a plain UPDATE from a random visitor, so this goes through the
+ * increment_vehicle_view SECURITY DEFINER function (published-only, atomic —
+ * see admin/supabase/migrations/0012). Best-effort: errors are swallowed
+ * rather than failing the page render. */
+export async function incrementViewCount(vehicleId: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.rpc("increment_vehicle_view", { p_vehicle_id: vehicleId });
+}
+
+export async function getMostViewedVehicles(limit: number, excludeIds: string[] = []): Promise<VehicleCardData[]> {
+  const supabase = await createClient();
+  const query = supabase
+    .from("vehicles")
+    .select(VEHICLE_CARD_SELECT)
+    .eq("status", "published")
+    .order("view_count", { ascending: false })
+    .limit(limit + excludeIds.length);
+
+  const [{ data }, locations] = await Promise.all([query, getLocationLookup()]);
+  const rows = ((data ?? []) as unknown as VehicleCardRow[]).filter((row) => !excludeIds.includes(row.id));
+  return rows.slice(0, limit).map((row) => mapVehicleRowToCard(row, locations));
+}

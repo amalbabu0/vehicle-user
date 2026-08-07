@@ -1,0 +1,44 @@
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { VehicleCard } from "@/components/vehicle-card";
+import type { VehicleCardData } from "@/lib/types/vehicle-card";
+
+export function VehicleGridSection({
+  id,
+  title,
+  subtitle,
+  vehicles,
+  favoritedIds,
+  viewAllHref,
+}: {
+  id?: string;
+  title: string;
+  subtitle?: string;
+  vehicles: VehicleCardData[];
+  favoritedIds: Set<string>;
+  viewAllHref?: string;
+}) {
+  if (vehicles.length === 0) return null;
+
+  return (
+    <section id={id} className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-semibold sm:text-3xl">{title}</h2>
+          {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
+        </div>
+        {viewAllHref ? (
+          <Link href={viewAllHref} className="no-underline">
+            <Button variant="outline">View all</Button>
+          </Link>
+        ) : null}
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {vehicles.map((vehicle) => (
+          <VehicleCard key={vehicle.id} vehicle={vehicle} favorited={favoritedIds.has(vehicle.id)} />
+        ))}
+      </div>
+    </section>
+  );
+}
