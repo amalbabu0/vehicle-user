@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BadgeCheck, MapPin, Phone } from "lucide-react";
-import { getVehicleBySlug, incrementViewCount } from "@/lib/data/vehicles";
+import { getVehicleBySlug, getRelatedVehicles, incrementViewCount } from "@/lib/data/vehicles";
 import { createPublicClient } from "@/lib/supabase/public-client";
 import { VehicleGallery } from "@/components/vehicle-gallery";
+import { VehicleCard } from "@/components/vehicle-card";
 import { FavoriteButton } from "@/components/favorite-button";
 import { VehicleJsonLd } from "@/components/seo/vehicle-jsonld";
 import { BreadcrumbJsonLd } from "@/components/seo/breadcrumb-jsonld";
@@ -52,6 +53,8 @@ export default async function VehicleDetailPage({ params }: PageProps) {
   // stays free of cookies()-dependent calls and can be statically rendered
   // — see PERFORMANCE.md.
   void incrementViewCount(vehicle.id);
+
+  const relatedVehicles = await getRelatedVehicles({ id: vehicle.id, brandId: vehicle.brandId, locationId: vehicle.locationId }, 8);
 
   const phoneDigits = vehicle.contactPhone.replace(/\D/g, "");
   const whatsappNumber = phoneDigits.length === 10 ? `91${phoneDigits}` : phoneDigits;
@@ -193,6 +196,19 @@ export default async function VehicleDetailPage({ params }: PageProps) {
             </div>
           </aside>
         </div>
+
+        {relatedVehicles.length > 0 ? (
+          <section className="mt-10 sm:mt-12" aria-labelledby="related-vehicles-heading">
+            <h2 id="related-vehicles-heading" className="text-xl font-semibold sm:text-2xl">
+              Similar vehicles
+            </h2>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+              {relatedVehicles.map((related) => (
+                <VehicleCard key={related.id} vehicle={related} />
+              ))}
+            </div>
+          </section>
+        ) : null}
       </main>
       <Footer />
     </>

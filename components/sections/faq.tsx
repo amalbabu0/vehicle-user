@@ -1,6 +1,6 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-const FAQS = [
+export const FAQS = [
   {
     question: "How do I buy a vehicle?",
     answer:

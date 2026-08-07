@@ -100,11 +100,13 @@ export type VehicleDetail = VehicleCardData & {
   features: string[];
   serviceChargePercent: number | null;
   images: { url: string; mediumUrl: string | null; thumbnailUrl: string | null }[];
+  brandId: string | null;
+  locationId: string | null;
 };
 
 const VEHICLE_DETAIL_SELECT = `
   id, slug, name, model, registration_year, fuel_type, transmission, km_driven,
-  lease_amount, lease_period, view_count, published_at, approved_by, location_id,
+  lease_amount, lease_period, view_count, published_at, approved_by, location_id, brand_id,
   description, contact_phone, direct_owner, condition, engine_capacity, seats, color,
   features, service_charge_percent,
   brands ( name ),
@@ -112,6 +114,7 @@ const VEHICLE_DETAIL_SELECT = `
 `;
 
 type VehicleDetailRow = Omit<VehicleCardRow, "vehicle_images"> & {
+  brand_id: string | null;
   description: string | null;
   contact_phone: string;
   direct_owner: boolean;
@@ -148,7 +151,63 @@ export async function getVehicleBySlug(slug: string): Promise<VehicleDetail | nu
     images: [...row.vehicle_images]
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((image) => ({ url: image.url, mediumUrl: image.medium_url, thumbnailUrl: image.thumbnail_url })),
+    brandId: row.brand_id,
+    locationId: row.location_id,
   };
+}
+
+/** Related-listings for the detail page's internal-linking section — same
+ * brand first (closest match), topped up with same-district listings if
+ * the brand alone doesn't fill `limit`. Excludes the current vehicle.
+ * A real internal link between individual vehicle pages didn't exist
+ * anywhere before this (see SEO.md audit) — without it, published
+ * listings were only ever reachable via search/homepage, not from each
+ * other, which is exactly what makes a page an SEO "orphan". */
+export async function getRelatedVehicles(
+  current: { id: string; brandId: string | null; locationId: string | null },
+  limit = 8
+): Promise<VehicleCardData[]> {
+  const supabase = createPublicClient();
+  const locations = await getLocationLookup();
+  const seen = new Set([current.id]);
+  const results: VehicleCardRow[] = [];
+
+  if (current.brandId) {
+    const { data } = await supabase
+      .from("vehicles")
+      .select(VEHICLE_CARD_SELECT)
+      .eq("status", "published")
+      .eq("brand_id", current.brandId)
+      .neq("id", current.id)
+      .order("published_at", { ascending: false })
+      .limit(limit);
+    for (const row of (data ?? []) as unknown as VehicleCardRow[]) {
+      if (!seen.has(row.id)) {
+        seen.add(row.id);
+        results.push(row);
+      }
+    }
+  }
+
+  if (results.length < limit && current.locationId) {
+    const { data } = await supabase
+      .from("vehicles")
+      .select(VEHICLE_CARD_SELECT)
+      .eq("status", "published")
+      .eq("location_id", current.locationId)
+      .neq("id", current.id)
+      .order("published_at", { ascending: false })
+      .limit(limit - results.length + seen.size);
+    for (const row of (data ?? []) as unknown as VehicleCardRow[]) {
+      if (results.length >= limit) break;
+      if (!seen.has(row.id)) {
+        seen.add(row.id);
+        results.push(row);
+      }
+    }
+  }
+
+  return results.slice(0, limit).map((row) => mapVehicleRowToCard(row, locations));
 }
 
 /** RLS blocks a plain UPDATE from a random visitor, so this goes through the

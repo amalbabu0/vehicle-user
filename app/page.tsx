@@ -8,6 +8,7 @@ import { WhyUs } from "@/components/sections/why-us";
 import { Testimonials } from "@/components/sections/testimonials";
 import { Faq } from "@/components/sections/faq";
 import { VehicleSectionSkeleton } from "@/components/sections/section-skeleton";
+import { FaqJsonLd } from "@/components/seo/faq-jsonld";
 
 export const revalidate = 120;
 
@@ -18,6 +19,7 @@ export const revalidate = 120;
 export default function HomePage() {
   return (
     <>
+      <FaqJsonLd />
       <Navbar />
       <main>
         <Hero />
