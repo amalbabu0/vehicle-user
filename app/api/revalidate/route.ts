@@ -17,6 +17,10 @@ export async function POST(request: Request) {
 
   if (slug) revalidatePath(`/vehicles/${slug}`);
   revalidatePath("/");
+  // A listing's status change (publish/withdraw/delete) changes which
+  // vehicles belong in the sitemap, so bust it on every call rather than
+  // only waiting out its own revalidate window (see app/sitemap.ts).
+  revalidatePath("/sitemap.xml");
 
   return NextResponse.json({ revalidated: true, slug });
 }

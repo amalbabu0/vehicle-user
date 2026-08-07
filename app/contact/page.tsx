@@ -4,7 +4,11 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { createPublicClient } from "@/lib/supabase/public-client";
 
-export const metadata: Metadata = { title: "Contact" };
+export const metadata: Metadata = {
+  title: "Contact",
+  description: "Get in touch with Kerala Lease Hub for questions about listings, leasing, or your account.",
+  alternates: { canonical: "/contact" },
+};
 
 export default async function ContactPage() {
   const supabase = createPublicClient();

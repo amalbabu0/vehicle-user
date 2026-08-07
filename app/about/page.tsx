@@ -5,6 +5,7 @@ import { Footer } from "@/components/footer";
 export const metadata: Metadata = {
   title: "About",
   description: "Kerala Lease Hub is a vehicle marketplace connecting buyers, sellers, and vehicle owners across Kerala.",
+  alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {

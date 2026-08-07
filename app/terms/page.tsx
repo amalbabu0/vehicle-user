@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
-export const metadata: Metadata = { title: "Terms of Use" };
+export const metadata: Metadata = {
+  title: "Terms of Use",
+  description: "Terms and conditions for using Kerala Lease Hub's vehicle marketplace.",
+  alternates: { canonical: "/terms" },
+};
 
 export default function TermsPage() {
   return (

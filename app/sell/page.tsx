@@ -7,6 +7,7 @@ import { createPublicClient } from "@/lib/supabase/public-client";
 export const metadata: Metadata = {
   title: "Sell Your Vehicle",
   description: "List your car or bike for sale or lease on Kerala Lease Hub.",
+  alternates: { canonical: "/sell" },
 };
 
 export default async function SellPage() {
