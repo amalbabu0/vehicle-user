@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
 import { Geist } from "next/font/google";
-import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { cn } from "@/lib/utils";
 import { AppProviders } from "@/components/providers/app-providers";
@@ -59,22 +58,33 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" className={cn("font-sans", geist.variable)} suppressHydrationWarning>
       <head>
         <SiteJsonLd />
+        {/* Google tag (gtag.js) — plain <script> tags, deliberately NOT
+            next/script. Verified directly against the deployed site (curl
+            + inspecting the actual built HTML): next/script always routes
+            through Next.js's internal loader shim (the __next_s array
+            push pattern) regardless of strategy — beforeInteractive vs
+            afterInteractive only changes *when* it runs relative to
+            hydration, neither ever emits the literal
+            <script src="https://www.googletagmanager.com/gtag/js?...">
+            tag a simple HTML-scanning verifier (like Google's own "tag not
+            detected" quick-check) looks for. A real browser executes
+            either form fine, but plain tags are what actually get
+            detected by that check. Same raw-<script>-via-
+            dangerouslySetInnerHTML pattern already used for JSON-LD
+            elsewhere in this app (see components/seo/*). */}
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GA_MEASUREMENT_ID}');`,
+          }}
+        />
       </head>
       <body>
         <AppProviders>{children}</AppProviders>
         <Analytics />
-        {/* Google tag (gtag.js) — afterInteractive so it loads without
-            blocking initial render/hydration, per Next.js's own guidance
-            for third-party analytics scripts. */}
-        <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${GA_MEASUREMENT_ID}');
-          `}
-        </Script>
       </body>
     </html>
   );
