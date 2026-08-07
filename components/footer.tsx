@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Mail, Phone } from "lucide-react";
 import { createPublicClient } from "@/lib/supabase/public-client";
@@ -26,8 +27,14 @@ export async function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3">
           <div>
-            <p className="text-lg font-semibold">Kerala Lease Hub</p>
-            <p className="mt-2 max-w-xs text-sm text-muted-foreground">
+            <Image
+              src="/branding/logo-footer.webp"
+              alt="Kerala Lease Hub — lease used cars and bikes across Kerala"
+              width={480}
+              height={135}
+              className="h-auto w-40"
+            />
+            <p className="mt-3 max-w-xs text-sm text-muted-foreground">
               Kerala&apos;s vehicle marketplace for buying, selling, and leasing used cars and bikes directly from owners.
             </p>
           </div>

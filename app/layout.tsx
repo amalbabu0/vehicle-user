@@ -38,11 +38,16 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
     url: env.SITE_URL,
     locale: "en_IN",
+    // Default share-preview image for any page that doesn't set its own
+    // (vehicle detail pages already override this with the listing's cover
+    // photo — see app/vehicles/[slug]/page.tsx's generateMetadata).
+    images: [{ url: "/branding/logo-footer.webp", width: 480, height: 135, alt: SITE_NAME }],
   },
   twitter: {
     card: "summary_large_image",
     title: `${SITE_NAME} — Buy, Sell & Lease Used Cars & Bikes in Kerala`,
     description: SITE_DESCRIPTION,
+    images: ["/branding/logo-footer.webp"],
   },
 };
 

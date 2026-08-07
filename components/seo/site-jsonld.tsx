@@ -12,6 +12,9 @@ export function SiteJsonLd() {
     "@type": "Organization",
     name: "Kerala Lease Hub",
     url: env.SITE_URL,
+    // Absolute URL, per Google's structured-data guidelines for the Logo
+    // rich result / knowledge panel — a relative path won't be picked up.
+    logo: `${env.SITE_URL}/branding/logo-footer.webp`,
     description: "Kerala's vehicle marketplace for buying, selling, and leasing used cars and bikes directly from owners.",
     areaServed: { "@type": "State", name: "Kerala" },
   };
