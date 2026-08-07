@@ -1,5 +1,13 @@
+import dynamic from "next/dynamic";
 import { getTestimonials } from "@/lib/data/home";
-import { TestimonialsCarousel } from "@/components/testimonials-carousel";
+
+// framer-motion (used by the carousel) is a genuinely heavy dependency, and
+// this section is very often empty (no testimonials curated yet) — code
+// split it into its own chunk so that chunk is only ever fetched on a page
+// load that actually has testimonials to show, not on every homepage visit.
+const TestimonialsCarousel = dynamic(() =>
+  import("@/components/testimonials-carousel").then((mod) => mod.TestimonialsCarousel)
+);
 
 export async function Testimonials() {
   const testimonials = await getTestimonials();

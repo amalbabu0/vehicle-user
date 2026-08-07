@@ -98,12 +98,15 @@ export type FilterableBrand = { id: string; name: string; slug: string };
  * filter sidebar's brand dropdown (broader than the curated homepage list). */
 export async function getFilterableBrands(): Promise<FilterableBrand[]> {
   const supabase = await createClient();
-  const [{ data: brands }, { data: vehicles }] = await Promise.all([
+  // Which brands have >=1 published listing comes from a Postgres GROUP BY
+  // (get_brand_vehicle_counts), not by fetching every published vehicle's
+  // brand_id — see lib/data/home.ts for the same pattern.
+  const [{ data: brands }, { data: counts }] = await Promise.all([
     supabase.from("brands").select("id, name, slug").order("name"),
-    supabase.from("vehicles").select("brand_id").eq("status", "published"),
+    supabase.rpc("get_brand_vehicle_counts"),
   ]);
 
-  const activeIds = new Set((vehicles ?? []).map((v) => v.brand_id).filter(Boolean));
+  const activeIds = new Set((counts ?? []).map((row) => row.brand_id));
   return (brands ?? []).filter((brand) => activeIds.has(brand.id));
 }
 

@@ -30,20 +30,20 @@ export type CategoryWithCount = { id: string; name: string; slug: string; count:
 
 export async function getCategoriesWithCounts(): Promise<CategoryWithCount[]> {
   const supabase = await createClient();
-  const [{ data: categories }, { data: vehicles }] = await Promise.all([
+  // Counts come from a Postgres GROUP BY (get_category_vehicle_counts), not
+  // by fetching every published vehicle row and counting in JS — that
+  // doesn't scale as the vehicles table grows, and the Supabase JS client
+  // has no GROUP BY of its own.
+  const [{ data: categories }, { data: counts }] = await Promise.all([
     supabase.from("categories").select("id, name, slug").order("name"),
-    supabase.from("vehicles").select("category_id").eq("status", "published"),
+    supabase.rpc("get_category_vehicle_counts"),
   ]);
 
-  const counts = new Map<string, number>();
-  for (const vehicle of vehicles ?? []) {
-    if (!vehicle.category_id) continue;
-    counts.set(vehicle.category_id, (counts.get(vehicle.category_id) ?? 0) + 1);
-  }
+  const countByCategory = new Map((counts ?? []).map((row) => [row.category_id, row.vehicle_count]));
 
   return (categories ?? []).map((category) => ({
     ...category,
-    count: counts.get(category.id) ?? 0,
+    count: Number(countByCategory.get(category.id) ?? 0),
   }));
 }
 
@@ -63,22 +63,26 @@ const POPULAR_BIKE_BRANDS = ["Hero", "Honda", "Yamaha", "Royal Enfield", "KTM", 
 
 async function getBrandsWithCounts(names: string[]): Promise<BrandWithCount[]> {
   const supabase = await createClient();
-  const [{ data: brands }, { data: vehicles }] = await Promise.all([
+  // Same GROUP BY aggregation as getCategoriesWithCounts, not a full scan of
+  // published vehicles' brand_id.
+  const [{ data: brands }, { data: counts }] = await Promise.all([
     supabase.from("brands").select("id, name, slug, logo_url").in("name", names),
-    supabase.from("vehicles").select("brand_id").eq("status", "published"),
+    supabase.rpc("get_brand_vehicle_counts"),
   ]);
 
-  const counts = new Map<string, number>();
-  for (const vehicle of vehicles ?? []) {
-    if (!vehicle.brand_id) continue;
-    counts.set(vehicle.brand_id, (counts.get(vehicle.brand_id) ?? 0) + 1);
-  }
+  const countByBrand = new Map((counts ?? []).map((row) => [row.brand_id, row.vehicle_count]));
 
   const byName = new Map((brands ?? []).map((brand) => [brand.name, brand]));
   return names
     .map((name) => byName.get(name))
     .filter((brand): brand is NonNullable<typeof brand> => Boolean(brand))
-    .map((brand) => ({ id: brand.id, name: brand.name, slug: brand.slug, logoUrl: brand.logo_url, count: counts.get(brand.id) ?? 0 }));
+    .map((brand) => ({
+      id: brand.id,
+      name: brand.name,
+      slug: brand.slug,
+      logoUrl: brand.logo_url,
+      count: Number(countByBrand.get(brand.id) ?? 0),
+    }));
 }
 
 export function getPopularCarBrands() {
@@ -98,26 +102,15 @@ export type PopularSearch = { label: string; brandName: string; model: string | 
  */
 export async function getPopularSearches(limit = 8): Promise<PopularSearch[]> {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("vehicles")
-    .select("model, view_count, brands ( name )")
-    .eq("status", "published")
-    .not("model", "is", null);
+  // get_popular_searches does the group-by-model, sum(view_count), sort,
+  // and LIMIT in Postgres — previously this fetched every published
+  // vehicle's model + view_count and did all of that in JS, an unbounded
+  // fetch that grew with the whole catalog just to return up to 8 rows.
+  const { data } = await supabase.rpc("get_popular_searches", { p_limit: limit });
 
-  const rows = (data ?? []) as unknown as { model: string | null; view_count: number; brands: { name: string } | null }[];
-  const grouped = new Map<string, { brandName: string; model: string; views: number }>();
-  for (const row of rows) {
-    if (!row.model || !row.brands?.name) continue;
-    const key = `${row.brands.name}|${row.model}`;
-    const existing = grouped.get(key);
-    if (existing) existing.views += row.view_count;
-    else grouped.set(key, { brandName: row.brands.name, model: row.model, views: row.view_count });
-  }
-
-  return [...grouped.values()]
-    .sort((a, b) => b.views - a.views)
-    .slice(0, limit)
-    .map((entry) => ({ label: `Used ${entry.model}`, brandName: entry.brandName, model: entry.model }));
+  return (data ?? [])
+    .filter((row): row is { brand_name: string; model: string; total_views: number } => Boolean(row.model))
+    .map((row) => ({ label: `Used ${row.model}`, brandName: row.brand_name, model: row.model }));
 }
 
 export type Testimonial = { name: string; location: string; quote: string; rating: number };

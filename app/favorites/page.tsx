@@ -9,7 +9,11 @@ import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Your Favorites", robots: { index: false, follow: false } };
 
-export default async function FavoritesPage() {
+const PAGE_SIZE = 20;
+
+type PageProps = { searchParams: Promise<{ page?: string }> };
+
+export default async function FavoritesPage({ searchParams }: PageProps) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -31,8 +35,23 @@ export default async function FavoritesPage() {
     );
   }
 
-  const { data: favorites } = await supabase.from("favorites").select("vehicle_id").eq("user_id", user.id);
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, Number(pageParam ?? 1));
+  const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
+  // Favorites lists can grow large for an active user — paginate rather
+  // than loading every saved vehicle at once.
+  const { data: favorites, count } = await supabase
+    .from("favorites")
+    .select("vehicle_id", { count: "exact" })
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
   const vehicles = await getVehicleCardsByIds((favorites ?? []).map((row) => row.vehicle_id));
+  const total = count ?? 0;
+  const hasNextPage = from + (favorites?.length ?? 0) < total;
 
   return (
     <>
@@ -48,11 +67,34 @@ export default async function FavoritesPage() {
             to get started.
           </p>
         ) : (
-          <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {vehicles.map((vehicle) => (
-              <VehicleCard key={vehicle.id} vehicle={vehicle} favorited />
-            ))}
-          </div>
+          <>
+            <p className="mt-1 text-sm text-muted-foreground">{total.toLocaleString("en-IN")} saved vehicle{total === 1 ? "" : "s"}</p>
+            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {vehicles.map((vehicle) => (
+                <VehicleCard key={vehicle.id} vehicle={vehicle} favorited />
+              ))}
+            </div>
+
+            {(page > 1 || hasNextPage) && (
+              <div className="mt-8 flex items-center justify-center gap-3">
+                <Link
+                  href={`/favorites?page=${Math.max(1, page - 1)}`}
+                  aria-disabled={page <= 1}
+                  className={`rounded-lg border border-border px-4 py-2 text-sm no-underline hover:bg-muted ${page <= 1 ? "pointer-events-none opacity-50" : ""}`}
+                >
+                  Previous
+                </Link>
+                <span className="text-sm text-muted-foreground">Page {page}</span>
+                <Link
+                  href={`/favorites?page=${page + 1}`}
+                  aria-disabled={!hasNextPage}
+                  className={`rounded-lg border border-border px-4 py-2 text-sm no-underline hover:bg-muted ${!hasNextPage ? "pointer-events-none opacity-50" : ""}`}
+                >
+                  Next
+                </Link>
+              </div>
+            )}
+          </>
         )}
       </main>
       <Footer />
