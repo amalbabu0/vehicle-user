@@ -1,4 +1,19 @@
-export default function HomePage() {
+import { redirect } from "next/navigation";
+
+interface HomePageProps {
+  searchParams: Promise<{
+    code?: string;
+    next?: string;
+  }>;
+}
+
+export default async function HomePage({ searchParams }: HomePageProps) {
+  const params = await searchParams;
+  if (params.code) {
+    const nextPath = params.next ? `&next=${encodeURIComponent(params.next)}` : "";
+    redirect(`/auth/callback?code=${encodeURIComponent(params.code)}${nextPath}`);
+  }
+
   // Real homepage (search, listing grid, filters) lands in the User
   // Website Core task. This confirms the scaffold boots end-to-end first.
   return (
