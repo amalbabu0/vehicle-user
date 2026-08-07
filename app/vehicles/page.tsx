@@ -6,6 +6,7 @@ import { getCategoriesWithCounts } from "@/lib/data/home";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { VehicleFiltersPanel } from "@/components/vehicle-filters-panel";
+import { VehicleFiltersMobile } from "@/components/vehicle-filters-mobile";
 import { InfiniteVehicleGrid } from "@/components/infinite-vehicle-grid";
 import { BreadcrumbJsonLd } from "@/components/seo/breadcrumb-jsonld";
 import { env } from "@/lib/env";
@@ -38,12 +39,13 @@ export default async function VehiclesSearchPage({ searchParams }: PageProps) {
       value == null ? [] : Array.isArray(value) ? value.map((v) => [key, v] as [string, string]) : [[key, value] as [string, string]]
     )
   ).toString();
+  const activeFilterCount = Object.keys(rawParams).filter((key) => key !== "offset" && rawParams[key]).length;
 
   return (
     <>
       <BreadcrumbJsonLd items={[{ name: "Home", url: env.SITE_URL }, { name: "Vehicles", url: `${env.SITE_URL}/vehicles` }]} />
       <Navbar />
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold sm:text-3xl">Browse vehicles</h1>
@@ -51,8 +53,12 @@ export default async function VehiclesSearchPage({ searchParams }: PageProps) {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[280px_1fr]">
-          <aside className="lg:sticky lg:top-20 lg:self-start">
+        <div className="mt-4 lg:hidden">
+          <VehicleFiltersMobile districts={districts} categories={categories} brands={brands} activeFilterCount={activeFilterCount} />
+        </div>
+
+        <div className="mt-4 grid gap-6 lg:mt-6 lg:grid-cols-[280px_1fr]">
+          <aside className="hidden lg:sticky lg:top-20 lg:block lg:self-start">
             <VehicleFiltersPanel districts={districts} categories={categories} brands={brands} />
           </aside>
 

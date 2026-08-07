@@ -43,12 +43,12 @@ export function NavbarClient({ user }: { user: { fullName: string | null; avatar
   return (
     <header className="glass-surface sticky top-0 z-40 border-b border-transparent px-4 py-3 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2 text-lg font-semibold no-underline text-foreground">
-          <Car className="size-6 text-primary" />
-          Kerala Lease Hub
+        <Link href="/" className="flex shrink-0 items-center gap-1.5 text-base font-semibold no-underline text-foreground sm:gap-2 sm:text-lg">
+          <Car className="size-5 shrink-0 text-primary sm:size-6" />
+          <span className="whitespace-nowrap">Kerala Lease Hub</span>
         </Link>
 
-        <nav className="hidden items-center gap-6 md:flex">
+        <nav className="hidden items-center gap-6 lg:flex">
           {NAV_LINKS.map((link) => (
             <Link key={link.href} href={link.href} className="text-sm font-medium text-foreground no-underline hover:text-primary">
               {link.label}
@@ -56,7 +56,7 @@ export function NavbarClient({ user }: { user: { fullName: string | null; avatar
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <ThemeToggle />
 
           {user ? (
@@ -95,7 +95,7 @@ export function NavbarClient({ user }: { user: { fullName: string | null; avatar
 
           <Sheet>
             <SheetTrigger asChild>
-              <Button type="button" variant="outline" size="icon" className="md:hidden" aria-label="Open menu">
+              <Button type="button" variant="outline" size="icon" className="lg:hidden" aria-label="Open menu">
                 <Menu className="size-4" />
               </Button>
             </SheetTrigger>

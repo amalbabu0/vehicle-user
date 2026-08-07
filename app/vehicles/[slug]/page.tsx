@@ -54,10 +54,41 @@ export default async function VehicleDetailPage({ params }: PageProps) {
       />
       <VehicleJsonLd vehicle={vehicle} />
       <Navbar />
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <div className="grid gap-6 lg:gap-8 lg:grid-cols-[1.6fr_1fr]">
           <div className="space-y-6">
             <VehicleGallery images={vehicle.images} name={vehicle.name} />
+
+            {/* Mobile/tablet: contact CTAs surface right under the gallery
+                instead of being buried below the full spec sheet. */}
+            <div className="glass-surface glass-specular space-y-3 rounded-(--glass-radius-lg) p-4 lg:hidden">
+              <p className="text-2xl font-bold">
+                ₹{vehicle.leaseAmount.toLocaleString("en-IN")}
+                <span className="text-sm font-normal text-muted-foreground"> / {vehicle.leasePeriod}</span>
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <a
+                  href={`tel:${phoneDigits}`}
+                  className="flex items-center justify-center gap-2 rounded-(--glass-radius) bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground no-underline transition hover:opacity-90"
+                >
+                  <Phone className="size-4" /> Call
+                </a>
+                <a
+                  href={`https://wa.me/${whatsappNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-(--glass-radius) border border-emerald-600 px-4 py-2.5 text-sm font-medium text-emerald-600 no-underline transition hover:bg-emerald-600/10"
+                >
+                  WhatsApp
+                </a>
+              </div>
+              <FavoriteButton
+                vehicleId={vehicle.id}
+                initialFavorited={favoriteIds.has(vehicle.id)}
+                label="Save to favorites"
+                className="w-full"
+              />
+            </div>
 
             <div className="glass-surface rounded-(--glass-radius-lg) p-6">
               <h1 className="text-2xl font-semibold">{vehicle.name}</h1>
@@ -114,8 +145,8 @@ export default async function VehicleDetailPage({ params }: PageProps) {
             </div>
           </div>
 
-          <aside className="space-y-4">
-            <div className="glass-surface glass-specular sticky top-6 rounded-(--glass-radius-lg) p-6">
+          <aside className="hidden space-y-4 lg:block">
+            <div className="glass-surface glass-specular rounded-(--glass-radius-lg) p-6 lg:sticky lg:top-6">
               <p className="text-3xl font-bold">
                 ₹{vehicle.leaseAmount.toLocaleString("en-IN")}
                 <span className="text-sm font-normal text-muted-foreground"> / {vehicle.leasePeriod}</span>
