@@ -479,7 +479,7 @@ export type Database = {
           condition: string | null
           contact_phone: string
           created_at: string
-          description: string
+          description: string | null
           direct_owner: boolean
           engine_capacity: string | null
           features: string[]
@@ -491,7 +491,9 @@ export type Database = {
           lease_period: string
           lister_id: string
           location_id: string | null
+          model: string | null
           name: string
+          ownership_count: number | null
           published_at: string | null
           registration_year: number | null
           rejected_reason: string | null
@@ -512,7 +514,7 @@ export type Database = {
           condition?: string | null
           contact_phone: string
           created_at?: string
-          description: string
+          description?: string | null
           direct_owner?: boolean
           engine_capacity?: string | null
           features?: string[]
@@ -524,7 +526,9 @@ export type Database = {
           lease_period: string
           lister_id: string
           location_id?: string | null
+          model?: string | null
           name: string
+          ownership_count?: number | null
           published_at?: string | null
           registration_year?: number | null
           rejected_reason?: string | null
@@ -545,7 +549,7 @@ export type Database = {
           condition?: string | null
           contact_phone?: string
           created_at?: string
-          description?: string
+          description?: string | null
           direct_owner?: boolean
           engine_capacity?: string | null
           features?: string[]
@@ -557,7 +561,9 @@ export type Database = {
           lease_period?: string
           lister_id?: string
           location_id?: string | null
+          model?: string | null
           name?: string
+          ownership_count?: number | null
           published_at?: string | null
           registration_year?: number | null
           rejected_reason?: string | null
