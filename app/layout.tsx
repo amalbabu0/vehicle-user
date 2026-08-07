@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
 import { Geist } from "next/font/google";
+import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { cn } from "@/lib/utils";
 import { AppProviders } from "@/components/providers/app-providers";
 import { SiteJsonLd } from "@/components/seo/site-jsonld";
 import { env } from "@/lib/env";
+
+const GA_MEASUREMENT_ID = "G-MD77RY4ZNR";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -60,6 +63,18 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <AppProviders>{children}</AppProviders>
         <Analytics />
+        {/* Google tag (gtag.js) — afterInteractive so it loads without
+            blocking initial render/hydration, per Next.js's own guidance
+            for third-party analytics scripts. */}
+        <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_MEASUREMENT_ID}');
+          `}
+        </Script>
       </body>
     </html>
   );
