@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
 import { env } from "@/lib/env";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public-client";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data: vehicles } = await supabase
     .from("vehicles")
     .select("slug, updated_at")

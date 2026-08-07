@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { Mail, Phone } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public-client";
 
 export const metadata: Metadata = { title: "Contact" };
 
 export default async function ContactPage() {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase.from("site_settings").select("value").eq("key", "contact_info").maybeSingle();
   const contact = (data?.value as { email?: string; phone?: string; whatsapp?: string }) ?? {};
   const hasContact = Boolean(contact.email || contact.phone || contact.whatsapp);

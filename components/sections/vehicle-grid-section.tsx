@@ -8,14 +8,12 @@ export function VehicleGridSection({
   title,
   subtitle,
   vehicles,
-  favoritedIds,
   viewAllHref,
 }: {
   id?: string;
   title: string;
   subtitle?: string;
   vehicles: VehicleCardData[];
-  favoritedIds: Set<string>;
   viewAllHref?: string;
 }) {
   if (vehicles.length === 0) return null;
@@ -36,7 +34,7 @@ export function VehicleGridSection({
 
       <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {vehicles.map((vehicle) => (
-          <VehicleCard key={vehicle.id} vehicle={vehicle} favorited={favoritedIds.has(vehicle.id)} />
+          <VehicleCard key={vehicle.id} vehicle={vehicle} />
         ))}
       </div>
     </section>

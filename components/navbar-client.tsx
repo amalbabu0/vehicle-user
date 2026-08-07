@@ -1,11 +1,14 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { Menu, Moon, Sun, Heart, LogOut, Car } from "lucide-react";
 import { logout } from "@/app/actions/auth";
+import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +26,8 @@ const NAV_LINKS = [
   { href: "/sell", label: "Sell Your Vehicle" },
 ];
 
+type NavbarUser = { fullName: string | null; avatarUrl: string | null; email: string } | null;
+
 function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   return (
@@ -39,7 +44,60 @@ function ThemeToggle() {
   );
 }
 
-export function NavbarClient({ user }: { user: { fullName: string | null; avatarUrl: string | null; email: string } | null }) {
+/**
+ * Fetches its own auth state client-side (rather than the page/layout
+ * fetching it server-side with cookies()) so pages that render this don't
+ * get forced into dynamic (per-request) rendering just because the navbar
+ * needs to know who's signed in — see PERFORMANCE.md's "Status" section on
+ * why that mattered here. Shows a skeleton avatar-slot until resolved.
+ */
+export function NavbarClient() {
+  const supabase = useSupabaseBrowserClient();
+  const [user, setUser] = useState<NavbarUser>(null);
+  const [resolved, setResolved] = useState(false);
+
+  useEffect(() => {
+    if (!supabase) return;
+
+    let active = true;
+
+    const loadUser = async () => {
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+
+      if (!authUser) {
+        if (active) {
+          setUser(null);
+          setResolved(true);
+        }
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("full_name, avatar_url")
+        .eq("id", authUser.id)
+        .maybeSingle();
+
+      if (active) {
+        setUser({ fullName: profile?.full_name ?? null, avatarUrl: profile?.avatar_url ?? null, email: authUser.email ?? "" });
+        setResolved(true);
+      }
+    };
+
+    loadUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => loadUser());
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
+
   return (
     <header className="glass-surface sticky top-0 z-40 border-b border-transparent px-4 py-3 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
@@ -59,7 +117,9 @@ export function NavbarClient({ user }: { user: { fullName: string | null; avatar
         <div className="flex items-center gap-1.5 sm:gap-2">
           <ThemeToggle />
 
-          {user ? (
+          {!resolved ? (
+            <Skeleton className="size-8 rounded-full" />
+          ) : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button type="button" className="rounded-full" aria-label="Account menu">

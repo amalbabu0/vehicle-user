@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public-client";
 import { getVehicleCardsByIds, getMostViewedVehicles } from "@/lib/data/vehicles";
 import type { VehicleCardData } from "@/lib/types/vehicle-card";
 
@@ -10,7 +10,7 @@ import type { VehicleCardData } from "@/lib/types/vehicle-card";
  * favorites yet.
  */
 export async function getFeaturedVehicles(limit = 8): Promise<VehicleCardData[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data: setting } = await supabase
     .from("site_settings")
     .select("value")
@@ -29,7 +29,7 @@ export async function getFeaturedVehicles(limit = 8): Promise<VehicleCardData[]>
 export type CategoryWithCount = { id: string; name: string; slug: string; count: number };
 
 export async function getCategoriesWithCounts(): Promise<CategoryWithCount[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   // Counts come from a Postgres GROUP BY (get_category_vehicle_counts), not
   // by fetching every published vehicle row and counting in JS — that
   // doesn't scale as the vehicles table grows, and the Supabase JS client
@@ -62,7 +62,7 @@ const POPULAR_CAR_BRANDS = [
 const POPULAR_BIKE_BRANDS = ["Hero", "Honda", "Yamaha", "Royal Enfield", "KTM", "TVS", "Bajaj", "Suzuki"];
 
 async function getBrandsWithCounts(names: string[]): Promise<BrandWithCount[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   // Same GROUP BY aggregation as getCategoriesWithCounts, not a full scan of
   // published vehicles' brand_id.
   const [{ data: brands }, { data: counts }] = await Promise.all([
@@ -101,7 +101,7 @@ export type PopularSearch = { label: string; brandName: string; model: string | 
  * component hides itself rather than showing fabricated "trending" terms.
  */
 export async function getPopularSearches(limit = 8): Promise<PopularSearch[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   // get_popular_searches does the group-by-model, sum(view_count), sort,
   // and LIMIT in Postgres — previously this fetched every published
   // vehicle's model + view_count and did all of that in JS, an unbounded
@@ -122,7 +122,7 @@ export type Testimonial = { name: string; location: string; quote: string; ratin
  * than showing placeholder quotes.
  */
 export async function getTestimonials(): Promise<Testimonial[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase.from("site_settings").select("value").eq("key", "homepage_testimonials").maybeSingle();
   return Array.isArray(data?.value) ? (data.value as Testimonial[]) : [];
 }

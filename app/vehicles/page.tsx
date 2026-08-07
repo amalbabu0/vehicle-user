@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { searchVehicles, parseFiltersFromSearchParams, getFilterableBrands } from "@/lib/data/search";
-import { getFavoriteVehicleIds } from "@/lib/data/favorites";
 import { getDistricts } from "@/lib/data/locations";
 import { getCategoriesWithCounts } from "@/lib/data/home";
 import { Navbar } from "@/components/navbar";
@@ -25,21 +24,25 @@ export default async function VehiclesSearchPage({ searchParams }: PageProps) {
   const rawParams = await searchParams;
   const filters = parseFiltersFromSearchParams(rawParams);
 
-  const [{ vehicles, hasMore, total }, favoriteIds, districts, categories, brands] = await Promise.all([
-    searchVehicles(filters, PAGE_SIZE, 0),
-    getFavoriteVehicleIds(),
+  const [{ vehicles, nextCursor, total }, districts, categories, brands] = await Promise.all([
+    searchVehicles(filters, PAGE_SIZE, null),
     getDistricts(),
     getCategoriesWithCounts(),
     getFilterableBrands(),
   ]);
 
-  const vehiclesWithFavorite = vehicles.map((vehicle) => ({ ...vehicle, favorited: favoriteIds.has(vehicle.id) }));
+  // Favorited state is resolved client-side (FavoritesProvider), not here —
+  // this keeps the page itself free of cookies()-dependent calls so it can
+  // be statically rendered/cached (see PERFORMANCE.md). `undefined`, not
+  // `false`: VehicleCard/FavoriteButton treat an explicit `false` as a known
+  // answer (skipping the context lookup), which would be wrong here.
+  const vehiclesWithFavorite = vehicles.map((vehicle) => ({ ...vehicle, favorited: undefined as boolean | undefined }));
   const filtersQueryString = new URLSearchParams(
     Object.entries(rawParams).flatMap(([key, value]) =>
       value == null ? [] : Array.isArray(value) ? value.map((v) => [key, v] as [string, string]) : [[key, value] as [string, string]]
     )
   ).toString();
-  const activeFilterCount = Object.keys(rawParams).filter((key) => key !== "offset" && rawParams[key]).length;
+  const activeFilterCount = Object.keys(rawParams).filter((key) => key !== "cursor" && rawParams[key]).length;
 
   return (
     <>
@@ -65,7 +68,7 @@ export default async function VehiclesSearchPage({ searchParams }: PageProps) {
           <InfiniteVehicleGrid
             key={filtersQueryString}
             initialVehicles={vehiclesWithFavorite}
-            initialHasMore={hasMore}
+            initialCursor={nextCursor}
             filtersQueryString={filtersQueryString}
           />
         </div>

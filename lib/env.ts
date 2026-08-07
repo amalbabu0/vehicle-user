@@ -34,6 +34,12 @@ const envSchema = z.object({
   TURNSTILE_SECRET_KEY: z.string().min(1),
 
   SITE_URL: z.url(),
+
+  // Shared secret with the admin app — lets it call /api/revalidate to
+  // instantly refresh a cached vehicle page after a publish/status change,
+  // instead of waiting out the `revalidate` window. Never exposed to the
+  // browser.
+  REVALIDATE_SECRET: z.string().min(1),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -7,16 +7,16 @@ const PAGE_SIZE = 20;
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const params = Object.fromEntries(url.searchParams.entries());
-  const offset = Number(params.offset ?? 0) || 0;
+  const cursor = params.cursor || null;
 
   const filters = parseFiltersFromSearchParams(params);
-  const [{ vehicles, hasMore }, favoriteIds] = await Promise.all([
-    searchVehicles(filters, PAGE_SIZE, offset),
+  const [{ vehicles, nextCursor }, favoriteIds] = await Promise.all([
+    searchVehicles(filters, PAGE_SIZE, cursor),
     getFavoriteVehicleIds(),
   ]);
 
   return NextResponse.json({
     vehicles: vehicles.map((vehicle) => ({ ...vehicle, favorited: favoriteIds.has(vehicle.id) })),
-    hasMore,
+    nextCursor,
   });
 }

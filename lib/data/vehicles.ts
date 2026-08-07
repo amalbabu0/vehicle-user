@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public-client";
 import { getLocationLookup, type LocationLookup } from "@/lib/data/locations";
 import type { VehicleCardData } from "@/lib/types/vehicle-card";
 
@@ -59,7 +59,7 @@ export function mapVehicleRowToCard(row: VehicleCardRow, locations: LocationLook
 
 export async function getVehicleCardsByIds(ids: string[]): Promise<VehicleCardData[]> {
   if (ids.length === 0) return [];
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const [{ data }, locations] = await Promise.all([
     supabase.from("vehicles").select(VEHICLE_CARD_SELECT).eq("status", "published").in("id", ids),
     getLocationLookup(),
@@ -74,7 +74,7 @@ export async function getVehicleCardsByIds(ids: string[]): Promise<VehicleCardDa
 }
 
 export async function getLatestVehicles(limit: number, offset = 0): Promise<VehicleCardData[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const [{ data }, locations] = await Promise.all([
     supabase
       .from("vehicles")
@@ -123,7 +123,7 @@ type VehicleDetailRow = VehicleCardRow & {
 };
 
 export async function getVehicleBySlug(slug: string): Promise<VehicleDetail | null> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const [{ data }, locations] = await Promise.all([
     supabase.from("vehicles").select(VEHICLE_DETAIL_SELECT).eq("status", "published").eq("slug", slug).maybeSingle(),
     getLocationLookup(),
@@ -152,12 +152,12 @@ export async function getVehicleBySlug(slug: string): Promise<VehicleDetail | nu
  * see admin/supabase/migrations/0012). Best-effort: errors are swallowed
  * rather than failing the page render. */
 export async function incrementViewCount(vehicleId: string): Promise<void> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   await supabase.rpc("increment_vehicle_view", { p_vehicle_id: vehicleId });
 }
 
 export async function getMostViewedVehicles(limit: number, excludeIds: string[] = []): Promise<VehicleCardData[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const query = supabase
     .from("vehicles")
     .select(VEHICLE_CARD_SELECT)

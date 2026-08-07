@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public-client";
 
 export type LocationLookup = Map<string, { name: string; districtName: string }>;
 
@@ -9,7 +9,7 @@ export type LocationLookup = Map<string, { name: string; districtName: string }>
  * taluk (parent is the district).
  */
 export async function getLocationLookup(): Promise<LocationLookup> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase.from("locations").select("id, name, parent_location_id");
   const rows = data ?? [];
   const byId = new Map(rows.map((row) => [row.id, row]));
@@ -26,7 +26,7 @@ export type DistrictOption = { id: string; name: string; slug: string };
 
 /** Districts are the top-level location rows (no parent). */
 export async function getDistricts(): Promise<DistrictOption[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from("locations")
     .select("id, name, slug")

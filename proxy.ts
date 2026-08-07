@@ -15,6 +15,20 @@ const PROTECTED_PATHS: string[] = [
 ];
 
 export async function proxy(request: NextRequest) {
+  // Some Supabase OAuth redirect configs land on "/" with ?code=... instead
+  // of /auth/callback directly. Catching this here (not in app/page.tsx,
+  // which used to read searchParams itself) means the homepage no longer
+  // needs to read searchParams at all, which is what let it become a fully
+  // static/cacheable route — see PERFORMANCE.md.
+  if (request.nextUrl.pathname === "/" && request.nextUrl.searchParams.has("code")) {
+    const code = request.nextUrl.searchParams.get("code")!;
+    const next = request.nextUrl.searchParams.get("next");
+    const callbackUrl = new URL("/auth/callback", request.url);
+    callbackUrl.searchParams.set("code", code);
+    if (next) callbackUrl.searchParams.set("next", next);
+    return NextResponse.redirect(callbackUrl);
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

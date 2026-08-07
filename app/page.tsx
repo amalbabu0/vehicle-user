@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Hero } from "@/components/hero";
@@ -14,20 +13,13 @@ import { Testimonials } from "@/components/sections/testimonials";
 import { Faq } from "@/components/sections/faq";
 import { VehicleSectionSkeleton } from "@/components/sections/section-skeleton";
 
-interface HomePageProps {
-  searchParams: Promise<{
-    code?: string;
-    next?: string;
-  }>;
-}
+export const revalidate = 120;
 
-export default async function HomePage({ searchParams }: HomePageProps) {
-  const params = await searchParams;
-  if (params.code) {
-    const nextPath = params.next ? `&next=${encodeURIComponent(params.next)}` : "";
-    redirect(`/auth/callback?code=${encodeURIComponent(params.code)}${nextPath}`);
-  }
-
+// A ?code=... landing on "/" (some Supabase OAuth redirect configs do this
+// instead of hitting /auth/callback directly) is now caught in proxy.ts,
+// not here — this page no longer reads searchParams at all, which is what
+// lets it be a fully static/cacheable route. See PERFORMANCE.md.
+export default function HomePage() {
   return (
     <>
       <Navbar />

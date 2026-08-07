@@ -4,21 +4,32 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFavorites } from "@/components/providers/favorites-provider";
 
 export function FavoriteButton({
   vehicleId,
-  initialFavorited = false,
+  initialFavorited,
   className,
   label,
 }: {
   vehicleId: string;
+  /** Only pass this when the page already knows the answer for certain
+   * (e.g. /favorites, where every card is trivially favorited). Everywhere
+   * else, omit it and let the FavoritesProvider context resolve it
+   * client-side — see components/providers/favorites-provider.tsx. */
   initialFavorited?: boolean;
   className?: string;
   label?: string;
 }) {
   const router = useRouter();
-  const [favorited, setFavorited] = useState(initialFavorited);
+  const { isFavorited, setFavorited: setContextFavorited } = useFavorites();
   const [isPending, startTransition] = useTransition();
+  // Only set after the user actually clicks — an optimistic override on top
+  // of whatever initialFavorited/context says, not a synced copy of it
+  // (no effect needed: this is a plain derived value each render).
+  const [optimistic, setOptimistic] = useState<boolean | null>(null);
+
+  const favorited = optimistic ?? initialFavorited ?? isFavorited(vehicleId) ?? false;
 
   const toggle = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -35,7 +46,8 @@ export function FavoriteButton({
       }
       if (!response.ok) return;
       const payload = await response.json();
-      setFavorited(payload.favorited);
+      setOptimistic(payload.favorited);
+      setContextFavorited(vehicleId, payload.favorited);
     });
   };
 

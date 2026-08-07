@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { Mail, Phone } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public-client";
 
 type ContactInfo = { email?: string; phone?: string; whatsapp?: string };
 
 async function getContactInfo(): Promise<ContactInfo> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase.from("site_settings").select("value").eq("key", "contact_info").maybeSingle();
   return (data?.value as ContactInfo) ?? {};
 }

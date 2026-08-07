@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BadgeCheck, MapPin, Phone } from "lucide-react";
 import { getVehicleBySlug, incrementViewCount } from "@/lib/data/vehicles";
-import { getFavoriteVehicleIds } from "@/lib/data/favorites";
+import { createPublicClient } from "@/lib/supabase/public-client";
 import { VehicleGallery } from "@/components/vehicle-gallery";
 import { FavoriteButton } from "@/components/favorite-button";
 import { VehicleJsonLd } from "@/components/seo/vehicle-jsonld";
@@ -12,6 +12,17 @@ import { Footer } from "@/components/footer";
 import { env } from "@/lib/env";
 
 export const revalidate = 120;
+
+// Prerender every currently-published vehicle at build time so this route
+// serves as static HTML from the CDN instead of rendering on every request
+// (see PERFORMANCE.md). New vehicles published after a deploy still work —
+// dynamicParams defaults to true, so an unseen slug renders on first
+// request and is then cached for `revalidate` seconds like the rest.
+export async function generateStaticParams() {
+  const supabase = createPublicClient();
+  const { data } = await supabase.from("vehicles").select("slug").eq("status", "published");
+  return (data ?? []).map((vehicle) => ({ slug: vehicle.slug }));
+}
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -37,7 +48,9 @@ export default async function VehicleDetailPage({ params }: PageProps) {
   const vehicle = await getVehicleBySlug(slug);
   if (!vehicle) notFound();
 
-  const favoriteIds = await getFavoriteVehicleIds();
+  // Favorited state resolves client-side (FavoritesProvider) so this page
+  // stays free of cookies()-dependent calls and can be statically rendered
+  // — see PERFORMANCE.md.
   void incrementViewCount(vehicle.id);
 
   const phoneDigits = vehicle.contactPhone.replace(/\D/g, "");
@@ -84,7 +97,6 @@ export default async function VehicleDetailPage({ params }: PageProps) {
               </div>
               <FavoriteButton
                 vehicleId={vehicle.id}
-                initialFavorited={favoriteIds.has(vehicle.id)}
                 label="Save to favorites"
                 className="w-full"
               />
@@ -172,7 +184,6 @@ export default async function VehicleDetailPage({ params }: PageProps) {
                 </a>
                 <FavoriteButton
                   vehicleId={vehicle.id}
-                  initialFavorited={favoriteIds.has(vehicle.id)}
                   label="Save to favorites"
                   className="w-full"
                 />

@@ -7,9 +7,12 @@ import type { VehicleCardData } from "@/lib/types/vehicle-card";
 
 export function VehicleCard({
   vehicle,
-  favorited = false,
+  favorited,
 }: {
   vehicle: VehicleCardData;
+  /** Only pass this when known for certain server-side (e.g. /favorites).
+   * Otherwise omit it and FavoriteButton resolves it from client-side
+   * context — see components/favorite-button.tsx. */
   favorited?: boolean;
 }) {
   return (
