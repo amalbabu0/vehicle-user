@@ -8,7 +8,7 @@ import { AppProviders } from "@/components/providers/app-providers";
 import { SiteJsonLd } from "@/components/seo/site-jsonld";
 import { env } from "@/lib/env";
 
-const GA_MEASUREMENT_ID = "G-MD77RY4ZNR";
+const GA_MEASUREMENT_ID = "G-KYY8FG24P2";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
