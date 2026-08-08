@@ -25,6 +25,22 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}${next}`);
   }
 
+  // Google never hands back a phone number, and Google's own consent
+  // screen doesn't ask "can this site use your name/photo" — that's asked
+  // once, here, right after a brand-new Google sign-up (not on every
+  // login). created_at/last_sign_in_at land within a couple seconds of
+  // each other only on the very first session for an account — the
+  // standard Supabase signal for "this account was just created" (no
+  // separate DB flag needed).
+  if (data.user.app_metadata?.provider === "google") {
+    const createdAt = new Date(data.user.created_at).getTime();
+    const lastSignInAt = data.user.last_sign_in_at ? new Date(data.user.last_sign_in_at).getTime() : createdAt;
+    const isNewGoogleUser = Math.abs(lastSignInAt - createdAt) < 10_000;
+    if (isNewGoogleUser) {
+      return NextResponse.redirect(`${origin}/complete-profile`);
+    }
+  }
+
   await supabase.rpc("log_audit_event", {
     p_action: "login",
     p_entity_type: "auth",

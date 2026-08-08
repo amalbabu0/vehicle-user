@@ -42,6 +42,24 @@ const resetPasswordSchema = z.object({
   password: passwordSchema,
 });
 
+const completeProfileSchema = z.object({
+  phone: z
+    .string()
+    .trim()
+    .transform((value) => {
+      const digits = value.replace(/\D/g, "");
+      // Strip a leading India country code (91) or trunk prefix (0) so
+      // "+91 98765 43210" and "09876543210" both normalize to the same
+      // bare 10-digit number as "9876543210" — otherwise every number
+      // typed with a country code was wrongly rejected as invalid.
+      if (digits.length === 12 && digits.startsWith("91")) return digits.slice(2);
+      if (digits.length === 11 && digits.startsWith("0")) return digits.slice(1);
+      return digits;
+    })
+    .pipe(z.string().regex(/^[6-9]\d{9}$/, { error: "Enter a valid 10-digit mobile number." })),
+  consent: z.literal("true", { error: "Please confirm you agree before continuing." }),
+});
+
 export type ActionState = {
   errors?: Record<string, string[]>;
   message?: string;
@@ -242,4 +260,43 @@ export async function signInWithGoogle() {
   }
 
   redirect(data.url);
+}
+
+// ============================================================================
+// complete-profile (post Google sign-up: phone + name/photo consent)
+// ============================================================================
+
+export async function completeProfile(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const validated = completeProfileSchema.safeParse({
+    phone: formData.get("phone"),
+    consent: formData.get("consent"),
+  });
+
+  if (!validated.success) {
+    return { errors: z.flattenError(validated.error).fieldErrors as Record<string, string[]> };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { message: "Your session expired. Please sign in again." };
+  }
+
+  const { error } = await supabase
+    .from("user_profiles")
+    .update({
+      phone: validated.data.phone,
+      profile_image_consent: true,
+      profile_image_consent_at: new Date().toISOString(),
+    })
+    .eq("id", user.id);
+
+  if (error) {
+    return { message: "Couldn't save your details. Please try again." };
+  }
+
+  redirect("/");
 }
