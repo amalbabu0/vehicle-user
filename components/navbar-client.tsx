@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { Menu, Moon, Sun, Heart, LogOut, Car } from "lucide-react";
+import { Menu, Moon, Sun, Heart, LogOut, Car, Monitor, Settings } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -28,22 +32,6 @@ const NAV_LINKS = [
 
 type NavbarUser = { fullName: string | null; avatarUrl: string | null; email: string } | null;
 
-function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      size="icon"
-      aria-label="Toggle dark mode"
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-    >
-      <Sun className="size-4 dark:hidden" />
-      <Moon className="hidden size-4 dark:block" />
-    </Button>
-  );
-}
-
 /**
  * Fetches its own auth state client-side (rather than the page/layout
  * fetching it server-side with cookies()) so pages that render this don't
@@ -53,6 +41,7 @@ function ThemeToggle() {
  */
 export function NavbarClient() {
   const supabase = useSupabaseBrowserClient();
+  const { theme, setTheme } = useTheme();
   const [user, setUser] = useState<NavbarUser>(null);
   const [resolved, setResolved] = useState(false);
 
@@ -115,33 +104,39 @@ export function NavbarClient() {
         </nav>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <ThemeToggle />
-
           {!resolved ? (
             <Skeleton className="size-8 rounded-full" />
           ) : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button type="button" className="rounded-full" aria-label="Account menu">
+                <button type="button" className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Open profile menu">
                   <Avatar>
                     <AvatarImage src={user.avatarUrl ?? undefined} alt={user.fullName ?? user.email} />
                     <AvatarFallback>{(user.fullName ?? user.email).charAt(0).toUpperCase()}</AvatarFallback>
                   </Avatar>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>{user.fullName ?? user.email}</DropdownMenuLabel>
+              <DropdownMenuContent align="end" sideOffset={8} className="w-[calc(100vw-1.5rem)] max-w-72 p-2">
+                <div className="flex flex-col items-center px-3 py-4 text-center">
+                  <Avatar className="size-16"><AvatarImage src={user.avatarUrl ?? undefined} alt={user.fullName ?? user.email} /><AvatarFallback className="text-xl">{(user.fullName ?? user.email).charAt(0).toUpperCase()}</AvatarFallback></Avatar>
+                  <p className="mt-3 w-full truncate text-sm font-medium">{user.email}</p>
+                </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className="min-h-10 gap-3 px-3 py-2">
                   <Link href="/favorites">
                     <Heart className="size-4" /> Favorites
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="min-h-10 gap-3 px-3 py-2">{theme === "dark" ? <Moon className="size-4" /> : theme === "light" ? <Sun className="size-4" /> : <Monitor className="size-4" />} Theme</DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="min-w-36 p-1"><DropdownMenuRadioGroup value={theme} onValueChange={setTheme}><DropdownMenuRadioItem value="light"><Sun className="size-4" /> Light</DropdownMenuRadioItem><DropdownMenuRadioItem value="dark"><Moon className="size-4" /> Dark</DropdownMenuRadioItem><DropdownMenuRadioItem value="system"><Monitor className="size-4" /> System</DropdownMenuRadioItem></DropdownMenuRadioGroup></DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuItem asChild className="min-h-10 gap-3 px-3 py-2"><Link href="/settings"><Settings className="size-4" /> Settings</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild variant="destructive">
+                <DropdownMenuItem asChild variant="destructive" className="min-h-10 gap-3 px-3 py-2">
                   <form action={logout} className="w-full">
                     <button type="submit" className="flex w-full items-center gap-2">
-                      <LogOut className="size-4" /> Sign out
+                      <LogOut className="size-4" /> Logout
                     </button>
                   </form>
                 </DropdownMenuItem>

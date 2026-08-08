@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
-import { getCountries, getCountryCallingCode, type CountryCode } from "libphonenumber-js/min";
+import { getCountries, getCountryCallingCode, parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js/min";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
@@ -27,17 +27,20 @@ export function PhoneInput({
   id,
   name,
   required,
+  defaultValue,
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedBy,
 }: {
   id?: string;
   name: string;
   required?: boolean;
+  defaultValue?: string | null;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
 }) {
-  const [country, setCountry] = useState<CountryCode>(DEFAULT_COUNTRY);
-  const [nationalNumber, setNationalNumber] = useState("");
+  const parsedDefault = defaultValue ? parsePhoneNumberFromString(defaultValue) : undefined;
+  const [country, setCountry] = useState<CountryCode>(parsedDefault?.country ?? DEFAULT_COUNTRY);
+  const [nationalNumber, setNationalNumber] = useState(parsedDefault?.nationalNumber ?? "");
   const selectId = useId();
 
   const countries = useMemo(
