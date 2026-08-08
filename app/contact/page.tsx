@@ -3,11 +3,15 @@ import { Mail, Phone } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { createPublicClient } from "@/lib/supabase/public-client";
+import { buildPageOg } from "@/lib/seo/page-metadata";
+
+const description = "Get in touch with Kerala Lease Hub for questions about listings, leasing, or your account.";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: "Get in touch with Kerala Lease Hub for questions about listings, leasing, or your account.",
+  description,
   alternates: { canonical: "/contact" },
+  ...buildPageOg({ title: "Contact", description, path: "/contact" }),
 };
 
 export default async function ContactPage() {

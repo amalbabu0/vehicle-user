@@ -11,6 +11,7 @@ import { VehicleCard } from "@/components/vehicle-card";
 import { VehiclePagination } from "@/components/vehicle-pagination";
 import { BreadcrumbJsonLd } from "@/components/seo/breadcrumb-jsonld";
 import { env } from "@/lib/env";
+import { buildPageOg } from "@/lib/seo/page-metadata";
 
 const PAGE_SIZE = 20;
 
@@ -22,6 +23,29 @@ function buildQueryString(rawParams: Record<string, string | string[] | undefine
       value == null || omit.includes(key) ? [] : Array.isArray(value) ? value.map((v) => [key, v] as [string, string]) : [[key, value] as [string, string]]
     )
   );
+}
+
+// Canonical is built from the *parsed* filters in a fixed key order, not
+// from raw searchParams — two URLs differing only in query-param order
+// (?brand=honda&fuelType=petrol vs. ?fuelType=petrol&brand=honda) are the
+// same content and must self-canonicalize to the same URL, or Google sees
+// them as duplicate pages competing against each other.
+function buildCanonicalQueryString(filters: VehicleFilters, page: number) {
+  const qs = new URLSearchParams();
+  if (filters.q) qs.set("q", filters.q);
+  if (filters.brand) qs.set("brand", filters.brand);
+  if (filters.category) qs.set("category", filters.category);
+  if (filters.district) qs.set("district", filters.district);
+  if (filters.fuelType) qs.set("fuelType", filters.fuelType);
+  if (filters.transmission) qs.set("transmission", filters.transmission);
+  if (filters.minPrice != null) qs.set("minPrice", String(filters.minPrice));
+  if (filters.maxPrice != null) qs.set("maxPrice", String(filters.maxPrice));
+  if (filters.year != null) qs.set("year", String(filters.year));
+  if (filters.ownerType) qs.set("ownerType", filters.ownerType);
+  if (filters.condition) qs.set("condition", filters.condition);
+  if (filters.sort) qs.set("sort", filters.sort);
+  if (page > 1) qs.set("page", String(page));
+  return qs;
 }
 
 // Two distinct result shapes normalized to one, so the page component can
@@ -46,14 +70,17 @@ async function getInfiniteScrollResults(filters: VehicleFilters) {
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const rawParams = await searchParams;
   const page = Math.max(1, Number(rawParams.page) || 1);
-  const qs = buildQueryString(rawParams, ["page"]);
-  if (page > 1) qs.set("page", String(page));
+  const filters = parseFiltersFromSearchParams(rawParams);
+  const qs = buildCanonicalQueryString(filters, page);
   const canonical = qs.toString() ? `/vehicles?${qs.toString()}` : "/vehicles";
+  const title = page > 1 ? `Browse Vehicles — Page ${page}` : "Browse Vehicles";
+  const description = "Browse used cars and bikes for sale or lease across Kerala — filter by brand, price, fuel type, transmission, and district.";
 
   return {
-    title: page > 1 ? `Browse Vehicles — Page ${page}` : "Browse Vehicles",
-    description: "Browse used cars and bikes for sale or lease across Kerala — filter by brand, price, fuel type, transmission, and district.",
+    title,
+    description,
     alternates: { canonical },
+    ...buildPageOg({ title, description, path: canonical }),
   };
 }
 

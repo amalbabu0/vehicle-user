@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { buildPageOg } from "@/lib/seo/page-metadata";
+
+const description = "Kerala Lease Hub is a vehicle marketplace connecting buyers, sellers, and vehicle owners across Kerala.";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "Kerala Lease Hub is a vehicle marketplace connecting buyers, sellers, and vehicle owners across Kerala.",
+  description,
   alternates: { canonical: "/about" },
+  ...buildPageOg({ title: "About", description, path: "/about" }),
 };
 
 export default function AboutPage() {

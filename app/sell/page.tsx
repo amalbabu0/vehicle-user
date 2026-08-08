@@ -3,11 +3,15 @@ import { Mail, Phone } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { createPublicClient } from "@/lib/supabase/public-client";
+import { buildPageOg } from "@/lib/seo/page-metadata";
+
+const description = "List your car or bike for sale or lease on Kerala Lease Hub.";
 
 export const metadata: Metadata = {
   title: "Sell Your Vehicle",
-  description: "List your car or bike for sale or lease on Kerala Lease Hub.",
+  description,
   alternates: { canonical: "/sell" },
+  ...buildPageOg({ title: "Sell Your Vehicle", description, path: "/sell" }),
 };
 
 export default async function SellPage() {

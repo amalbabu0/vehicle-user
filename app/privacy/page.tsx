@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { buildPageOg } from "@/lib/seo/page-metadata";
+
+const description = "How Kerala Lease Hub collects, uses, and protects your information.";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "How Kerala Lease Hub collects, uses, and protects your information.",
+  description,
   alternates: { canonical: "/privacy" },
+  ...buildPageOg({ title: "Privacy Policy", description, path: "/privacy" }),
 };
 
 export default function PrivacyPage() {

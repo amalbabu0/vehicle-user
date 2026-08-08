@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { buildPageOg } from "@/lib/seo/page-metadata";
+
+const description = "Terms and conditions for using Kerala Lease Hub's vehicle marketplace.";
 
 export const metadata: Metadata = {
   title: "Terms of Use",
-  description: "Terms and conditions for using Kerala Lease Hub's vehicle marketplace.",
+  description,
   alternates: { canonical: "/terms" },
+  ...buildPageOg({ title: "Terms of Use", description, path: "/terms" }),
 };
 
 export default function TermsPage() {
