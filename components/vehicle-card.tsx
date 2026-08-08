@@ -3,6 +3,7 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { BadgeCheck, Car } from "lucide-react";
 import { FavoriteButton } from "@/components/favorite-button";
+import { ShareButton } from "@/components/share-button";
 import type { VehicleCardData } from "@/lib/types/vehicle-card";
 
 export function VehicleCard({
@@ -24,8 +25,9 @@ export function VehicleCard({
 
   return (
     <div className="glass-surface glass-specular group relative overflow-hidden rounded-(--glass-radius-lg) transition duration-300 hover:-translate-y-1 hover:shadow-xl">
-      <div className="absolute right-3 top-3 z-10">
+      <div className="absolute right-3 top-3 z-10 flex flex-col gap-2">
         <FavoriteButton vehicleId={vehicle.id} initialFavorited={favorited} />
+        <ShareButton slug={vehicle.slug} name={vehicle.name} />
       </div>
 
       <Link href={`/vehicles/${vehicle.slug}`} className="block text-foreground no-underline">
