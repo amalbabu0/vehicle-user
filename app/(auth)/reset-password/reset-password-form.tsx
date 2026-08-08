@@ -1,13 +1,18 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { resetPassword } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/password-input";
+import { PasswordStrengthIndicator } from "@/components/password-strength-indicator";
+import { calculatePasswordStrength } from "@/lib/password-strength";
 
 export function ResetPasswordForm() {
   const [state, formAction, pending] = useActionState(resetPassword, undefined);
+  const [password, setPassword] = useState("");
+
+  const { meetsAllRequirements } = calculatePasswordStrength(password);
 
   return (
     <>
@@ -16,7 +21,14 @@ export function ResetPasswordForm() {
       <form action={formAction} className="mt-6 space-y-4">
         <div className="space-y-2">
           <Label htmlFor="password">New password</Label>
-          <Input id="password" name="password" type="password" autoComplete="new-password" required />
+          <PasswordInput
+            id="password"
+            name="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
           {state?.errors?.password && (
             <ul className="text-sm text-destructive list-inside list-disc">
               {state.errors.password.map((e) => (
@@ -24,6 +36,7 @@ export function ResetPasswordForm() {
               ))}
             </ul>
           )}
+          <PasswordStrengthIndicator password={password} />
         </div>
 
         {state?.message && (
@@ -32,7 +45,7 @@ export function ResetPasswordForm() {
           </p>
         )}
 
-        <Button type="submit" className="w-full" disabled={pending}>
+        <Button type="submit" className="w-full" disabled={pending || !meetsAllRequirements}>
           {pending ? "Saving…" : "Save new password"}
         </Button>
       </form>

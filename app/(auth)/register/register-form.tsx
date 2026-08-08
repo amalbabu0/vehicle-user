@@ -2,16 +2,25 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Check, X } from "lucide-react";
 import { register, signInWithGoogle } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/password-input";
+import { PasswordStrengthIndicator } from "@/components/password-strength-indicator";
 import { TurnstileWidget, type TurnstileWidgetHandle } from "@/components/turnstile-widget";
+import { calculatePasswordStrength } from "@/lib/password-strength";
 
 export function RegisterForm() {
   const [state, formAction, pending] = useActionState(register, undefined);
   const [token, setToken] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const turnstileRef = useRef<TurnstileWidgetHandle>(null);
+
+  const { meetsAllRequirements } = calculatePasswordStrength(password);
+  const passwordsMatch = confirmPassword.length > 0 ? confirmPassword === password : null;
 
   const succeeded = Boolean(state?.message && !state.errors && state.message.startsWith("Check your email"));
 
@@ -62,13 +71,42 @@ export function RegisterForm() {
 
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
-          <Input id="password" name="password" type="password" autoComplete="new-password" required />
+          <PasswordInput
+            id="password"
+            name="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
           {state?.errors?.password && (
             <ul className="text-sm text-destructive list-inside list-disc">
               {state.errors.password.map((e) => (
                 <li key={e}>{e}</li>
               ))}
             </ul>
+          )}
+          <PasswordStrengthIndicator password={password} />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">Confirm password</Label>
+          <PasswordInput
+            id="confirmPassword"
+            name="confirmPassword"
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
+          {passwordsMatch !== null && (
+            <p
+              aria-live="polite"
+              className={`flex items-center gap-1.5 text-xs ${passwordsMatch ? "text-emerald-600 dark:text-emerald-500" : "text-destructive"}`}
+            >
+              {passwordsMatch ? <Check className="size-3.5" aria-hidden="true" /> : <X className="size-3.5" aria-hidden="true" />}
+              {passwordsMatch ? "Passwords match" : "Passwords do not match"}
+            </p>
           )}
         </div>
 
@@ -81,7 +119,11 @@ export function RegisterForm() {
           </p>
         )}
 
-        <Button type="submit" className="w-full" disabled={pending || !token}>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={pending || !token || !meetsAllRequirements || !passwordsMatch}
+        >
           {pending ? "Creating account…" : "Create account"}
         </Button>
       </form>
