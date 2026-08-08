@@ -70,6 +70,14 @@ export function RegisterForm() {
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="phone">Mobile number</Label>
+          <Input id="phone" name="phone" type="tel" inputMode="numeric" autoComplete="tel" placeholder="10-digit mobile number" required />
+          {state?.errors?.phone && (
+            <p className="text-sm text-destructive">{state.errors.phone[0]}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
           <PasswordInput
             id="password"

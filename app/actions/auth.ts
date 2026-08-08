@@ -20,9 +20,28 @@ const passwordSchema = z
   .regex(/[0-9]/, { error: "Contain at least one number." })
   .regex(/[^a-zA-Z0-9]/, { error: "Contain at least one special character." });
 
+// Shared by register() and completeProfile() (the Google-onboarding flow)
+// — one normalization rule for a phone number regardless of which path
+// collected it.
+const phoneSchema = z
+  .string()
+  .trim()
+  .transform((value) => {
+    const digits = value.replace(/\D/g, "");
+    // Strip a leading India country code (91) or trunk prefix (0) so
+    // "+91 98765 43210" and "09876543210" both normalize to the same
+    // bare 10-digit number as "9876543210" — otherwise every number
+    // typed with a country code was wrongly rejected as invalid.
+    if (digits.length === 12 && digits.startsWith("91")) return digits.slice(2);
+    if (digits.length === 11 && digits.startsWith("0")) return digits.slice(1);
+    return digits;
+  })
+  .pipe(z.string().regex(/^[6-9]\d{9}$/, { error: "Enter a valid 10-digit mobile number." }));
+
 const registerSchema = z.object({
   fullName: z.string().min(2, { error: "Name must be at least 2 characters." }).trim(),
   email: z.email({ error: "Enter a valid email address." }).trim(),
+  phone: phoneSchema,
   password: passwordSchema,
   turnstileToken: z.string().min(1, { error: "Complete the verification challenge." }),
 });
@@ -55,20 +74,7 @@ const resetPasswordSchema = z.object({
 });
 
 const completeProfileSchema = z.object({
-  phone: z
-    .string()
-    .trim()
-    .transform((value) => {
-      const digits = value.replace(/\D/g, "");
-      // Strip a leading India country code (91) or trunk prefix (0) so
-      // "+91 98765 43210" and "09876543210" both normalize to the same
-      // bare 10-digit number as "9876543210" — otherwise every number
-      // typed with a country code was wrongly rejected as invalid.
-      if (digits.length === 12 && digits.startsWith("91")) return digits.slice(2);
-      if (digits.length === 11 && digits.startsWith("0")) return digits.slice(1);
-      return digits;
-    })
-    .pipe(z.string().regex(/^[6-9]\d{9}$/, { error: "Enter a valid 10-digit mobile number." })),
+  phone: phoneSchema,
   consent: z.literal("true", { error: "Please confirm you agree before continuing." }),
 });
 
@@ -122,6 +128,7 @@ export async function register(_prevState: ActionState, formData: FormData): Pro
   const validated = registerSchema.safeParse({
     fullName: formData.get("fullName"),
     email: formData.get("email"),
+    phone: formData.get("phone"),
     password: formData.get("password"),
     turnstileToken: formData.get("turnstileToken"),
   });
@@ -141,14 +148,20 @@ export async function register(_prevState: ActionState, formData: FormData): Pro
     return { message: "Verification failed. Please try again." };
   }
 
-  const { fullName, email, password } = validated.data;
+  const { fullName, email, phone, password } = validated.data;
   const supabase = await createClient();
 
+  // phone travels through raw_user_meta_data the same way full_name
+  // already does — handle_new_user() reads both when it creates the
+  // user_profiles row (see admin migration 0025), because there's no
+  // session yet to do a direct RLS-scoped update with (email confirmation
+  // is required, so signUp() returns a user but no session until they
+  // click the link).
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { full_name: fullName },
+      data: { full_name: fullName, phone },
       emailRedirectTo: `${env.SITE_URL}/auth/callback?next=/accountt-verifed`,
     },
   });
