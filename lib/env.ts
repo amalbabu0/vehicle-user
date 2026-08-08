@@ -33,7 +33,14 @@ const envSchema = z.object({
   TURNSTILE_SITE_KEY: z.string().min(1),
   TURNSTILE_SECRET_KEY: z.string().min(1),
 
-  SITE_URL: z.url(),
+  // Normalized to strip any trailing slash: every call site does
+  // `${env.SITE_URL}/path`, and a trailing slash here produces a literal
+  // double slash (".online//auth/callback...") that doesn't string-match
+  // Supabase's redirect URL allow-list — a real bug, not cosmetic, since
+  // Supabase falls back to the bare Site URL for anything it doesn't
+  // recognize (this is why password-reset/confirm-signup/Google-login
+  // links were landing on the homepage instead of their real destination).
+  SITE_URL: z.url().transform((url) => url.replace(/\/+$/, "")),
 
   // Shared secret with the admin app — lets it call /api/revalidate to
   // instantly refresh a cached vehicle page after a publish/status change,
