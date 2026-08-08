@@ -40,7 +40,11 @@ export const TurnstileWidget = forwardRef<
   const { data: config } = usePublicConfig();
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
+  // Lazy initial value (not a post-mount effect) so a page reached via
+  // client-side navigation — where the script tag from a previous page is
+  // already sitting in the DOM — doesn't wait on an onLoad that will
+  // never fire again for an already-loaded script.
+  const [scriptLoaded, setScriptLoaded] = useState(() => typeof window !== "undefined" && Boolean(window.turnstile));
 
   useImperativeHandle(ref, () => ({
     reset: () => {
@@ -49,6 +53,21 @@ export const TurnstileWidget = forwardRef<
       }
     },
   }));
+
+  // Covers the gap between that initial check and the script actually
+  // finishing (fresh load on this page, or still mid-load from a
+  // previous page's <Script> tag) — polls rather than relying solely on
+  // the onLoad callback below.
+  useEffect(() => {
+    if (scriptLoaded) return;
+    const interval = setInterval(() => {
+      if (window.turnstile) {
+        setScriptLoaded(true);
+        clearInterval(interval);
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, [scriptLoaded]);
 
   useEffect(() => {
     if (!scriptLoaded || !config || !containerRef.current || !window.turnstile) return;
