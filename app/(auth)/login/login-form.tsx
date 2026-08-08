@@ -131,7 +131,11 @@ export function LoginForm() {
 
         {state?.message && (
           <div className="space-y-2" role="alert">
-            <p className="text-sm text-destructive">{state.message}</p>
+            {/* Not a genuine error — the account exists and the password
+                was never even checked, Supabase blocks sign-in entirely
+                pre-confirmation — so this reads as a next-step reminder,
+                not a destructive/red failure. */}
+            <p className={`text-sm ${state.emailUnconfirmed ? "text-muted-foreground" : "text-destructive"}`}>{state.message}</p>
             {state.accountMissing && (
               <Link href="/register" className="no-underline">
                 <Button type="button" variant="outline" size="sm" className="w-full">

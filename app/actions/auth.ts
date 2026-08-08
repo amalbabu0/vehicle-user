@@ -79,6 +79,10 @@ export type ActionState = {
    * the form show a Register action alongside the message instead of just
    * plain text. */
   accountMissing?: boolean;
+  /** Set by login() when the account exists and the password was never
+   * even checked — Supabase blocks sign-in entirely pre-confirmation, so
+   * this is not a "wrong password" case and shouldn't be worded like one. */
+  emailUnconfirmed?: boolean;
 } | undefined;
 
 async function clientIp(): Promise<string> {
@@ -220,6 +224,9 @@ export async function login(_prevState: ActionState, formData: FormData): Promis
   }
 
   if (signInResult.error) {
+    if (signInResult.error.code === "email_not_confirmed") {
+      return { message: "Please check your email and verify your account before signing in.", emailUnconfirmed: true };
+    }
     return { message: "Email or password is incorrect." };
   }
 
