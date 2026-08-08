@@ -3,10 +3,10 @@
 import { useActionState, useState } from "react";
 import { completeProfile } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PhoneInput } from "@/components/phone-input";
 
 export function CompleteProfileForm({
   fullName,
@@ -30,7 +30,7 @@ export function CompleteProfileForm({
 
       <div className="space-y-2">
         <Label htmlFor="phone">Mobile number</Label>
-        <Input id="phone" name="phone" type="tel" inputMode="numeric" autoComplete="tel" placeholder="10-digit mobile number" required />
+        <PhoneInput id="phone" name="phone" required aria-invalid={Boolean(state?.errors?.phone)} />
         {state?.errors?.phone && <p className="text-sm text-destructive">{state.errors.phone[0]}</p>}
       </div>
 

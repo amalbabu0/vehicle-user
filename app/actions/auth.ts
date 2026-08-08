@@ -3,6 +3,7 @@
 import * as z from "zod";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { isValidPhoneNumber } from "libphonenumber-js/min";
 import { createClient } from "@/lib/supabase/server";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { authRateLimit, checkRateLimit } from "@/lib/rate-limit";
@@ -21,22 +22,16 @@ const passwordSchema = z
   .regex(/[^a-zA-Z0-9]/, { error: "Contain at least one special character." });
 
 // Shared by register() and completeProfile() (the Google-onboarding flow)
-// — one normalization rule for a phone number regardless of which path
-// collected it.
+// — both now collect phone via components/phone-input.tsx, which submits
+// one already-E.164-formatted value (e.g. "+919876543210": country
+// selector + national number combined client-side). isValidPhoneNumber()
+// is the same library the picker's country/calling-code list comes from,
+// so client and server agree on what counts as valid without a second,
+// hand-rolled set of per-country rules.
 const phoneSchema = z
   .string()
   .trim()
-  .transform((value) => {
-    const digits = value.replace(/\D/g, "");
-    // Strip a leading India country code (91) or trunk prefix (0) so
-    // "+91 98765 43210" and "09876543210" both normalize to the same
-    // bare 10-digit number as "9876543210" — otherwise every number
-    // typed with a country code was wrongly rejected as invalid.
-    if (digits.length === 12 && digits.startsWith("91")) return digits.slice(2);
-    if (digits.length === 11 && digits.startsWith("0")) return digits.slice(1);
-    return digits;
-  })
-  .pipe(z.string().regex(/^[6-9]\d{9}$/, { error: "Enter a valid 10-digit mobile number." }));
+  .refine((value) => isValidPhoneNumber(value), { error: "Enter a valid mobile number." });
 
 const registerSchema = z.object({
   fullName: z.string().min(2, { error: "Name must be at least 2 characters." }).trim(),

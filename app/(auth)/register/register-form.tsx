@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/password-input";
 import { PasswordStrengthIndicator } from "@/components/password-strength-indicator";
+import { PhoneInput } from "@/components/phone-input";
 import { TurnstileWidget, type TurnstileWidgetHandle } from "@/components/turnstile-widget";
 import { calculatePasswordStrength } from "@/lib/password-strength";
 
@@ -71,7 +72,7 @@ export function RegisterForm() {
 
         <div className="space-y-2">
           <Label htmlFor="phone">Mobile number</Label>
-          <Input id="phone" name="phone" type="tel" inputMode="numeric" autoComplete="tel" placeholder="10-digit mobile number" required />
+          <PhoneInput id="phone" name="phone" required aria-invalid={Boolean(state?.errors?.phone)} />
           {state?.errors?.phone && (
             <p className="text-sm text-destructive">{state.errors.phone[0]}</p>
           )}
