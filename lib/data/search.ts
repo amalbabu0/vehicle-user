@@ -66,12 +66,19 @@ type FilterableVehiclesQuery = ReturnType<ReturnType<ReturnType<typeof createPub
 
 /** Shared by both retrieval strategies below — every filter, applied the
  * same way regardless of whether the caller then does cursor or offset
- * pagination on top. */
+ * pagination on top.
+ *
+ * Returns `{ query }` rather than the builder directly: Supabase query
+ * builders are thenable (awaiting one executes the query), so `return q`
+ * from an async function gets auto-unwrapped by the Promise resolution
+ * procedure — the query runs immediately and the caller receives the
+ * response object instead of the still-chainable builder. Wrapping in a
+ * plain object (no `.then`) avoids that flattening. */
 async function applyFilters(
   query: FilterableVehiclesQuery,
   filters: VehicleFilters,
   supabase: ReturnType<typeof createPublicClient>
-): Promise<FilterableVehiclesQuery> {
+): Promise<{ query: FilterableVehiclesQuery }> {
   let q = query;
   if (filters.q?.trim()) {
     const safe = filters.q.replace(/[,()%]/g, " ").trim();
@@ -96,7 +103,7 @@ async function applyFilters(
   if (filters.year != null) q = q.eq("registration_year", filters.year);
   if (filters.ownerType) q = q.eq("direct_owner", filters.ownerType === "direct");
   if (filters.condition) q = q.ilike("condition", `%${filters.condition.replace(/[,()%]/g, " ").trim()}%`);
-  return q;
+  return { query: q };
 }
 
 export async function searchVehicles(
@@ -105,7 +112,7 @@ export async function searchVehicles(
   cursor: string | null
 ): Promise<{ vehicles: VehicleCardData[]; nextCursor: string | null; total: number }> {
   const supabase = createPublicClient();
-  let query = await applyFilters(supabase.from("vehicles").select(VEHICLE_CARD_SELECT, { count: "exact" }).eq("status", "published"), filters, supabase);
+  let { query } = await applyFilters(supabase.from("vehicles").select(VEHICLE_CARD_SELECT, { count: "exact" }).eq("status", "published"), filters, supabase);
 
   const sortOption = filters.sort ?? "latest";
   const { column, ascending } = SORT_CONFIG[sortOption];
@@ -154,7 +161,7 @@ export async function searchVehiclesByPage(
   pageSize: number
 ): Promise<{ vehicles: VehicleCardData[]; total: number; totalPages: number }> {
   const supabase = createPublicClient();
-  let query = await applyFilters(supabase.from("vehicles").select(VEHICLE_CARD_SELECT, { count: "exact" }).eq("status", "published"), filters, supabase);
+  let { query } = await applyFilters(supabase.from("vehicles").select(VEHICLE_CARD_SELECT, { count: "exact" }).eq("status", "published"), filters, supabase);
 
   const sortOption = filters.sort ?? "latest";
   const { column, ascending } = SORT_CONFIG[sortOption];
