@@ -21,8 +21,8 @@ export function VerifiedRedirect() {
   }, [router]);
 
   return (
-    <p className="text-muted-foreground mt-1 text-sm">
-      Redirecting you to the homepage in {Math.max(secondsLeft, 0)}s…
+    <p className="text-muted-foreground mt-1 text-sm" aria-live="polite">
+      Redirecting to homepage in {Math.max(secondsLeft, 0)} second{secondsLeft === 1 ? "" : "s"}…
     </p>
   );
 }

@@ -18,7 +18,13 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error || !data.user) {
-    return NextResponse.redirect(`${origin}/login?error=oauth_failed`);
+    // A confirm-signup link that's already been used once fails exchange
+    // the same way a genuinely expired/invalid one does — Supabase gives
+    // no reliable way to tell "already verified" apart from "truly
+    // invalid" at this point, so both land on the same message, worded to
+    // cover either case gracefully rather than sounding like an error.
+    const errorCode = next === "/accountt-verifed" ? "verification_failed" : "oauth_failed";
+    return NextResponse.redirect(`${origin}/login?error=${errorCode}`);
   }
 
   if (next === "/reset-password") {
