@@ -98,7 +98,7 @@ export async function register(_prevState: ActionState, formData: FormData): Pro
     password,
     options: {
       data: { full_name: fullName },
-      emailRedirectTo: `${env.SITE_URL}/auth/callback`,
+      emailRedirectTo: `${env.SITE_URL}/auth/callback?next=/verified`,
     },
   });
 
