@@ -1,12 +1,25 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { Suspense, useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { forgotPassword } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TurnstileWidget, type TurnstileWidgetHandle } from "@/components/turnstile-widget";
+
+// useSearchParams() opts a component out of static prerendering unless
+// wrapped in Suspense — isolated here so the rest of the page stays static.
+function ExpiredBanner() {
+  const searchParams = useSearchParams();
+  if (!searchParams.get("expired")) return null;
+  return (
+    <p className="mt-4 text-sm text-destructive" role="alert">
+      That reset page expired. Request a new link below.
+    </p>
+  );
+}
 
 export function ForgotPasswordForm() {
   const [state, formAction, pending] = useActionState(forgotPassword, undefined);
@@ -42,6 +55,10 @@ export function ForgotPasswordForm() {
       <p className="text-muted-foreground mt-1 text-sm">
         We&rsquo;ll email you a link to reset it.
       </p>
+
+      <Suspense fallback={null}>
+        <ExpiredBanner />
+      </Suspense>
 
       <form action={formAction} className="mt-6 space-y-4">
         <div className="space-y-2">
