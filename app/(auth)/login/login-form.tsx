@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, ArrowRight } from "lucide-react";
 import appIcon from "@/app/icon.png";
+import { GoogleIcon } from "@/components/google-icon";
 import { login, signInWithGoogle } from "@/app/actions/auth";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -179,7 +180,8 @@ export function LoginForm() {
       </div>
 
       <form action={signInWithGoogle}>
-        <Button type="submit" variant="outline" className="w-full">
+        <Button type="submit" variant="outline" className="w-full gap-3">
+          <GoogleIcon className="size-5" />
           Continue with Google
         </Button>
       </form>

@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Check, X } from "lucide-react";
+import { GoogleIcon } from "@/components/google-icon";
 import { register, signInWithGoogle } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -144,7 +145,8 @@ export function RegisterForm() {
       </div>
 
       <form action={signInWithGoogle}>
-        <Button type="submit" variant="outline" className="w-full">
+        <Button type="submit" variant="outline" className="w-full gap-3">
+          <GoogleIcon className="size-5" />
           Continue with Google
         </Button>
       </form>
