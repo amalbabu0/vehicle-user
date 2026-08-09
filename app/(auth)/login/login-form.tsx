@@ -1,9 +1,11 @@
 "use client";
 
 import { Suspense, useActionState, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Car, Mail, Lock, ArrowRight } from "lucide-react";
+import { Mail, Lock, ArrowRight } from "lucide-react";
+import appIcon from "@/app/icon.png";
 import { login, signInWithGoogle } from "@/app/actions/auth";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -78,9 +80,7 @@ export function LoginForm() {
   return (
     <>
       <div className="mb-6 flex flex-col items-center gap-3 text-center">
-        <div className="flex size-16 items-center justify-center rounded-full border border-border bg-muted/40">
-          <Car className="size-7 text-foreground" />
-        </div>
+        <Image src={appIcon} alt="" width={40} height={40} className="size-10" priority />
         <h1 className="text-xl font-semibold">Sign in</h1>
       </div>
 
@@ -141,9 +141,7 @@ export function LoginForm() {
         <Suspense fallback={null}>
           <RedirectToField />
         </Suspense>
-        <div className="flex min-h-[60px] items-center justify-center rounded-lg border border-border bg-muted/20 p-2">
-          <TurnstileWidget ref={turnstileRef} action="login" onVerify={setToken} />
-        </div>
+        <TurnstileWidget ref={turnstileRef} action="login" onVerify={setToken} />
 
         {state?.message && (
           <div className="space-y-2" role="alert">
