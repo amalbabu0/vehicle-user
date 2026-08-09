@@ -3,6 +3,7 @@
 import { Suspense, useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Car, Mail, Lock, ArrowRight } from "lucide-react";
 import { login, signInWithGoogle } from "@/app/actions/auth";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -76,7 +77,12 @@ export function LoginForm() {
 
   return (
     <>
-      <h1 className="text-xl font-semibold">Sign in</h1>
+      <div className="mb-6 flex flex-col items-center gap-3 text-center">
+        <div className="flex size-16 items-center justify-center rounded-full border border-border bg-muted/40">
+          <Car className="size-7 text-foreground" />
+        </div>
+        <h1 className="text-xl font-semibold">Sign in</h1>
+      </div>
 
       <Suspense fallback={null}>
         <OAuthErrorBanner />
@@ -85,15 +91,19 @@ export function LoginForm() {
       <form action={formAction} className="mt-6 space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            aria-invalid={Boolean(state?.errors?.email)}
-            aria-describedby={state?.errors?.email ? "email-error" : undefined}
-            required
-          />
+          <div className="relative">
+            <Mail className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              className="pl-9"
+              aria-invalid={Boolean(state?.errors?.email)}
+              aria-describedby={state?.errors?.email ? "email-error" : undefined}
+              required
+            />
+          </div>
           {state?.errors?.email && (
             <p id="email-error" className="text-sm text-destructive">
               {state.errors.email[0]}
@@ -108,14 +118,18 @@ export function LoginForm() {
               Forgot password?
             </Link>
           </div>
-          <PasswordInput
-            id="password"
-            name="password"
-            autoComplete="current-password"
-            aria-invalid={Boolean(state?.errors?.password)}
-            aria-describedby={state?.errors?.password ? "password-error" : undefined}
-            required
-          />
+          <div className="relative">
+            <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <PasswordInput
+              id="password"
+              name="password"
+              autoComplete="current-password"
+              className="pl-9"
+              aria-invalid={Boolean(state?.errors?.password)}
+              aria-describedby={state?.errors?.password ? "password-error" : undefined}
+              required
+            />
+          </div>
           {state?.errors?.password && (
             <p id="password-error" className="text-sm text-destructive">
               {state.errors.password[0]}
@@ -127,7 +141,9 @@ export function LoginForm() {
         <Suspense fallback={null}>
           <RedirectToField />
         </Suspense>
-        <TurnstileWidget ref={turnstileRef} action="login" onVerify={setToken} />
+        <div className="flex min-h-[60px] items-center justify-center rounded-lg border border-border bg-muted/20 p-2">
+          <TurnstileWidget ref={turnstileRef} action="login" onVerify={setToken} />
+        </div>
 
         {state?.message && (
           <div className="space-y-2" role="alert">
@@ -146,8 +162,15 @@ export function LoginForm() {
           </div>
         )}
 
-        <Button type="submit" className="w-full" disabled={pending || !token} aria-label={pending ? "Logging in" : "Log in"}>
+        <Button
+          type="submit"
+          size="lg"
+          className="group w-full rounded-full"
+          disabled={pending || !token}
+          aria-label={pending ? "Logging in" : "Log in"}
+        >
           {pending ? "Logging in…" : "Log in"}
+          <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
         </Button>
       </form>
 
