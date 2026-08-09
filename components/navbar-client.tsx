@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { Menu, Moon, Sun, Heart, LogOut, Car, Monitor, Settings } from "lucide-react";
+import { ChevronDown, Moon, Sun, Heart, LogOut, Car, Monitor, Settings } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,12 +16,8 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 
 const NAV_LINKS = [
   { href: "/vehicles", label: "Browse Vehicles" },
@@ -44,6 +40,7 @@ export function NavbarClient() {
   const { theme, setTheme } = useTheme();
   const [user, setUser] = useState<NavbarUser>(null);
   const [resolved, setResolved] = useState(false);
+  const [themeExpanded, setThemeExpanded] = useState(false);
 
   useEffect(() => {
     if (!supabase) return;
@@ -107,7 +104,7 @@ export function NavbarClient() {
           {!resolved ? (
             <Skeleton className="size-8 rounded-full" />
           ) : user ? (
-            <DropdownMenu>
+            <DropdownMenu onOpenChange={(open) => { if (!open) setThemeExpanded(false); }}>
               <DropdownMenuTrigger asChild>
                 <button type="button" className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Open profile menu">
                   <Avatar>
@@ -127,10 +124,24 @@ export function NavbarClient() {
                     <Heart className="size-4" /> Favorites
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="min-h-10 gap-3 px-3 py-2">{theme === "dark" ? <Moon className="size-4" /> : theme === "light" ? <Sun className="size-4" /> : <Monitor className="size-4" />} Theme</DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="min-w-36 p-1"><DropdownMenuRadioGroup value={theme} onValueChange={setTheme}><DropdownMenuRadioItem value="light"><Sun className="size-4" /> Light</DropdownMenuRadioItem><DropdownMenuRadioItem value="dark"><Moon className="size-4" /> Dark</DropdownMenuRadioItem><DropdownMenuRadioItem value="system"><Monitor className="size-4" /> System</DropdownMenuRadioItem></DropdownMenuRadioGroup></DropdownMenuSubContent>
-                </DropdownMenuSub>
+                <DropdownMenuItem
+                  className="min-h-10 gap-3 px-3 py-2"
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    setThemeExpanded((open) => !open);
+                  }}
+                >
+                  {theme === "dark" ? <Moon className="size-4" /> : theme === "light" ? <Sun className="size-4" /> : <Monitor className="size-4" />}
+                  Theme
+                  <ChevronDown className={`ml-auto size-4 shrink-0 transition-transform ${themeExpanded ? "rotate-180" : ""}`} />
+                </DropdownMenuItem>
+                {themeExpanded && (
+                  <DropdownMenuRadioGroup value={theme} onValueChange={setTheme} className="flex flex-col gap-0.5 py-0.5 pl-2">
+                    <DropdownMenuRadioItem value="light" className="min-h-9 gap-3 px-3 py-1.5"><Sun className="size-4" /> Light</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="dark" className="min-h-9 gap-3 px-3 py-1.5"><Moon className="size-4" /> Dark</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="system" className="min-h-9 gap-3 px-3 py-1.5"><Monitor className="size-4" /> System</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                )}
                 <DropdownMenuItem asChild className="min-h-10 gap-3 px-3 py-2"><Link href="/settings"><Settings className="size-4" /> Settings</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild variant="destructive" className="min-h-10 gap-3 px-3 py-2">
@@ -147,28 +158,6 @@ export function NavbarClient() {
               <Button size="sm">Sign in</Button>
             </Link>
           )}
-
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button type="button" variant="outline" size="icon" className="lg:hidden" aria-label="Open menu">
-                <Menu className="size-4" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right">
-              <SheetTitle className="px-4 pt-4">Menu</SheetTitle>
-              <nav className="flex flex-col gap-1 p-4">
-                {NAV_LINKS.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="rounded-lg px-3 py-2 text-sm font-medium text-foreground no-underline hover:bg-muted"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </nav>
-            </SheetContent>
-          </Sheet>
         </div>
       </div>
     </header>

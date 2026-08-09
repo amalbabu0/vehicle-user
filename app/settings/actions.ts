@@ -1,9 +1,11 @@
 "use server";
 
 import * as z from "zod";
+import { redirect } from "next/navigation";
 import { isValidPhoneNumber } from "libphonenumber-js/min";
 import { createClient } from "@/lib/supabase/server";
 import { verifySession } from "@/lib/auth/dal";
+import { env } from "@/lib/env";
 
 const nameSchema = z.string().trim().min(2, { error: "Name must be at least 2 characters." }).max(100, { error: "Name is too long." });
 const phoneSchema = z.string().trim().refine((value) => isValidPhoneNumber(value), { error: "Enter a valid mobile number." });
@@ -63,4 +65,35 @@ export async function changeEmail(_previous: SettingsActionState, formData: Form
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ email: email.data });
   return error ? { error: error.message } : { message: "Check your email to confirm the new address." };
+}
+
+export async function deleteAccount(_previous: SettingsActionState, formData: FormData): Promise<SettingsActionState> {
+  await verifySession();
+  const confirmation = formData.get("confirmation");
+  const currentPassword = z.string().min(1, { error: "Enter your current password." }).safeParse(formData.get("currentPassword"));
+  if (confirmation !== "DELETE") return { error: "Type DELETE to confirm.", field: "confirmation" };
+  if (!currentPassword.success) return { error: currentPassword.error.issues[0]?.message, field: "deleteCurrentPassword" };
+
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { error: "Your session has expired. Please sign in again." };
+
+  // Permanent deletion requires the Supabase service-role key, which this
+  // app deliberately never holds server-side (see lib/env.ts) — the actual
+  // deleteUser() call happens in the delete-own-account Edge Function
+  // instead, which re-verifies the password itself before deleting.
+  const response = await fetch(`${env.SUPABASE_URL}/functions/v1/delete-own-account`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ confirmation: "DELETE", currentPassword: currentPassword.data }),
+  });
+
+  const result = await response.json().catch(() => null);
+  if (!response.ok) return { error: result?.message ?? "Could not delete your account. Please try again.", field: "deleteCurrentPassword" };
+
+  await supabase.auth.signOut();
+  redirect("/login");
 }
