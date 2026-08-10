@@ -6,9 +6,7 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { VehicleFiltersPanel } from "@/components/vehicle-filters-panel";
 import { VehicleFiltersMobile } from "@/components/vehicle-filters-mobile";
-import { InfiniteVehicleGrid } from "@/components/infinite-vehicle-grid";
-import { VehicleCard } from "@/components/vehicle-card";
-import { VehiclePagination } from "@/components/vehicle-pagination";
+import { VehicleResults } from "@/components/vehicle-results";
 import { BreadcrumbJsonLd } from "@/components/seo/breadcrumb-jsonld";
 import { env } from "@/lib/env";
 import { buildPageOg } from "@/lib/seo/page-metadata";
@@ -136,30 +134,16 @@ export default async function VehiclesSearchPage({ searchParams }: PageProps) {
           </aside>
 
           <div>
-            {isPaginatedView ? (
-              vehicles.length === 0 ? (
-                <p className="py-16 text-center text-sm text-muted-foreground">No vehicles on this page.</p>
-              ) : (
-                <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
-                  {vehiclesWithFavorite.map((vehicle) => (
-                    <VehicleCard key={vehicle.id} vehicle={vehicle} />
-                  ))}
-                </div>
-              )
-            ) : (
-              <InfiniteVehicleGrid
-                key={filtersQueryString}
-                initialVehicles={vehiclesWithFavorite}
-                initialCursor={nextCursor}
-                filtersQueryString={filtersQueryString}
-              />
-            )}
-
-            {/* Always rendered, including on page 1 — this is what lets a
-                crawler discover /vehicles?page=2 from a plain link on the
-                very first page, without needing to execute infinite-scroll
-                JS at all. */}
-            <VehiclePagination page={requestedPage} totalPages={totalPages} baseSearchParams={baseSearchParams} />
+            <VehicleResults
+              isPaginatedView={isPaginatedView}
+              vehicles={vehiclesWithFavorite}
+              initialVehicles={vehiclesWithFavorite}
+              initialCursor={nextCursor}
+              filtersQueryString={filtersQueryString}
+              page={requestedPage}
+              totalPages={totalPages}
+              baseSearchParamsString={baseSearchParams.toString()}
+            />
           </div>
         </div>
       </main>

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Mail, Phone, MessageCircle } from "lucide-react";
+import { Mail, Phone, MessageCircle, ShieldCheck, PhoneCall, ReceiptText } from "lucide-react";
 import { createPublicClient } from "@/lib/supabase/public-client";
 
 type ContactInfo = { email?: string; phone?: string; whatsapp?: string };
@@ -24,12 +24,23 @@ const LEGAL_LINKS = [
   { href: "/terms", label: "Terms" },
 ];
 
+const TRUST_BADGES = [
+  { icon: ShieldCheck, label: "Verified listings" },
+  { icon: PhoneCall, label: "Direct owner contact" },
+  { icon: ReceiptText, label: "No hidden charges" },
+];
+
 export async function Footer() {
   const contact = await getContactInfo();
   const hasContact = Boolean(contact.email || contact.phone || contact.whatsapp);
 
   return (
     <footer className="mt-16 border-t border-border bg-muted/30">
+      {/* A thin brand-color accent caps the page content before the footer
+          takes over — the same radial-gradient motif the hero opens with,
+          bookending the page instead of an abrupt flat border. */}
+      <div className="h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-[1.3fr_1fr_1fr]">
           <div className="col-span-2 sm:col-span-1">
@@ -51,11 +62,19 @@ export async function Footer() {
               Kerala&apos;s dedicated vehicle leasing platform — lease cars, bikes, and every kind of vehicle directly
               from owners.
             </p>
+            <ul className="mt-5 space-y-2.5">
+              {TRUST_BADGES.map((badge) => (
+                <li key={badge.label} className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <badge.icon className="size-3.5 shrink-0 text-primary" />
+                  {badge.label}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div>
+          <div className={hasContact ? undefined : "col-span-2 sm:col-span-1"}>
             <p className="text-xs font-semibold tracking-wide text-foreground/80 uppercase">Links</p>
-            <ul className="mt-4 space-y-2.5">
+            <ul className={hasContact ? "mt-4 space-y-2.5" : "mt-4 grid grid-cols-2 gap-x-4 gap-y-2.5 sm:block sm:space-y-2.5"}>
               {FOOTER_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-sm text-muted-foreground no-underline hover:text-foreground">

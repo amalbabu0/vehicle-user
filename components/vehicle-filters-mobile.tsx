@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { VehicleFiltersPanel } from "@/components/vehicle-filters-panel";
 import type { DistrictOption } from "@/lib/data/locations";
@@ -26,15 +25,18 @@ export function VehicleFiltersMobile({
     <div className="lg:hidden">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button variant="outline" className="w-full gap-2">
-            <SlidersHorizontal className="size-4" />
-            Filters
+          <button
+            type="button"
+            className="flex w-full items-center gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3 text-left transition hover:border-primary/50"
+          >
+            <SlidersHorizontal className="size-4 shrink-0 text-muted-foreground" />
+            <span className="flex-1 text-sm text-muted-foreground">Filters</span>
             {activeFilterCount > 0 ? (
-              <span className="ml-1 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+              <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
                 {activeFilterCount}
               </span>
             ) : null}
-          </Button>
+          </button>
         </SheetTrigger>
         <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto">
           <SheetTitle className="px-4 pt-4">Filters</SheetTitle>

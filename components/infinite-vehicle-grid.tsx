@@ -15,11 +15,13 @@ export function InfiniteVehicleGrid({
   initialCursor,
   filtersQueryString,
   fetchUrl = "/api/vehicles/search",
+  view = "column",
 }: {
   initialVehicles: VehicleWithFavorite[];
   initialCursor: string | null;
   filtersQueryString: string;
   fetchUrl?: string;
+  view?: "grid" | "column" | "list";
 }) {
   // The parent remounts this component (key={filtersQueryString}) whenever
   // filters change, so this state only ever needs to seed once from props —
@@ -72,13 +74,20 @@ export function InfiniteVehicleGrid({
     );
   }
 
+  const isList = view === "list";
+  const layoutClass = isList
+    ? "flex flex-col gap-3"
+    : view === "grid"
+      ? "grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4"
+      : "grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3";
+
   return (
     <div>
-      <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
+      <div className={layoutClass}>
         {vehicles.map((vehicle) => (
-          <VehicleCard key={vehicle.id} vehicle={vehicle} favorited={vehicle.favorited} />
+          <VehicleCard key={vehicle.id} vehicle={vehicle} favorited={vehicle.favorited} view={isList ? "list" : "grid"} />
         ))}
-        {isLoading ? Array.from({ length: 3 }).map((_, i) => <VehicleCardSkeleton key={`skeleton-${i}`} />) : null}
+        {isLoading ? Array.from({ length: 3 }).map((_, i) => <VehicleCardSkeleton key={`skeleton-${i}`} view={isList ? "list" : "grid"} />) : null}
       </div>
       {cursor ? <div ref={sentinelRef} className="h-1 w-full" /> : null}
     </div>
