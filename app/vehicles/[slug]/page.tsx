@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BadgeCheck, MapPin, Phone } from "lucide-react";
-import { getVehicleBySlug, getRelatedVehicles, incrementViewCount } from "@/lib/data/vehicles";
+import { getVehicleBySlug, getRelatedVehicles, incrementViewCount, formatOwnership } from "@/lib/data/vehicles";
 import { createPublicClient } from "@/lib/supabase/public-client";
 import { VehicleGallery } from "@/components/vehicle-gallery";
 import { VehicleCard } from "@/components/vehicle-card";
+import { VehicleDescription } from "@/components/vehicle-description";
 import { FavoriteButton } from "@/components/favorite-button";
 import { VehicleJsonLd } from "@/components/seo/vehicle-jsonld";
 import { BreadcrumbJsonLd } from "@/components/seo/breadcrumb-jsonld";
@@ -103,7 +104,7 @@ export default async function VehicleDetailPage({ params }: PageProps) {
               <div className="grid grid-cols-2 gap-2">
                 <a
                   href={`tel:${phoneDigits}`}
-                  className="flex items-center justify-center gap-2 rounded-(--glass-radius) bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground no-underline transition hover:opacity-90"
+                  className="flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground no-underline transition hover:opacity-90"
                 >
                   <Phone className="size-4" /> Call
                 </a>
@@ -111,7 +112,7 @@ export default async function VehicleDetailPage({ params }: PageProps) {
                   href={whatsappHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 rounded-(--glass-radius) border border-emerald-600 px-4 py-2.5 text-sm font-medium text-emerald-600 no-underline transition hover:bg-emerald-600/10"
+                  className="flex items-center justify-center gap-2 rounded-full border border-emerald-600 px-4 py-2.5 text-sm font-medium text-emerald-600 no-underline transition hover:bg-emerald-600/10"
                 >
                   WhatsApp
                 </a>
@@ -119,12 +120,12 @@ export default async function VehicleDetailPage({ params }: PageProps) {
               <FavoriteButton
                 vehicleId={vehicle.id}
                 label="Save to favorites"
-                className="w-full"
+                className="w-full rounded-full"
               />
             </div>
 
             <div className="glass-surface rounded-(--glass-radius-lg) p-6">
-              <h1 className="text-2xl font-semibold">{vehicle.name}</h1>
+              <h1 className="text-2xl font-bold tracking-wide uppercase">{vehicle.name}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
                   <MapPin className="size-4" /> {vehicle.districtName ?? "Kerala"}
@@ -136,11 +137,12 @@ export default async function VehicleDetailPage({ params }: PageProps) {
                 ) : null}
               </div>
 
-              <dl className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+              <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-border pt-6 sm:grid-cols-3">
                 {[
                   ["Year", vehicle.registrationYear],
                   ["Fuel type", vehicle.fuelType],
                   ["Transmission", vehicle.transmission],
+                  ["Ownership", formatOwnership(vehicle.ownershipCount)],
                   ["KM driven", vehicle.kmDriven != null ? `${vehicle.kmDriven.toLocaleString("en-IN")} km` : null],
                   ["Condition", vehicle.condition],
                   ["Engine", vehicle.engineCapacity],
@@ -172,7 +174,9 @@ export default async function VehicleDetailPage({ params }: PageProps) {
               {vehicle.description ? (
                 <div className="mt-6">
                   <h2 className="text-sm font-semibold">Description</h2>
-                  <p className="mt-2 whitespace-pre-line text-sm leading-6 text-muted-foreground">{vehicle.description}</p>
+                  <div className="mt-2">
+                    <VehicleDescription description={vehicle.description} />
+                  </div>
                 </div>
               ) : null}
             </div>
@@ -196,7 +200,7 @@ export default async function VehicleDetailPage({ params }: PageProps) {
               <div className="mt-6 space-y-2">
                 <a
                   href={`tel:${phoneDigits}`}
-                  className="flex w-full items-center justify-center gap-2 rounded-(--glass-radius) bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground no-underline transition hover:opacity-90"
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground no-underline transition hover:opacity-90"
                 >
                   <Phone className="size-4" /> Call owner
                 </a>
@@ -204,14 +208,14 @@ export default async function VehicleDetailPage({ params }: PageProps) {
                   href={whatsappHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex w-full items-center justify-center gap-2 rounded-(--glass-radius) border border-emerald-600 px-4 py-2.5 text-sm font-medium text-emerald-600 no-underline transition hover:bg-emerald-600/10"
+                  className="flex w-full items-center justify-center gap-2 rounded-full border border-emerald-600 px-4 py-2.5 text-sm font-medium text-emerald-600 no-underline transition hover:bg-emerald-600/10"
                 >
                   WhatsApp owner
                 </a>
                 <FavoriteButton
                   vehicleId={vehicle.id}
                   label="Save to favorites"
-                  className="w-full"
+                  className="w-full rounded-full"
                 />
               </div>
 

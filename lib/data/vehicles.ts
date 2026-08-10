@@ -99,16 +99,28 @@ export type VehicleDetail = VehicleCardData & {
   color: string | null;
   features: string[];
   serviceChargePercent: number | null;
+  ownershipCount: number | null;
   images: { url: string; mediumUrl: string | null; thumbnailUrl: string | null }[];
   brandId: string | null;
   locationId: string | null;
 };
 
+const OWNERSHIP_ORDINALS = ["1st", "2nd", "3rd", "4th", "5th", "6th"];
+
+/** "1st Owner", "2nd Owner", etc. — falls back to "Nth" past the named
+ * ordinals rather than guessing a suffix (5th+ owner is rare but possible
+ * for an older vehicle). */
+export function formatOwnership(count: number | null): string | null {
+  if (!count || count < 1) return null;
+  const label = OWNERSHIP_ORDINALS[count - 1] ?? `${count}th`;
+  return `${label} Owner`;
+}
+
 const VEHICLE_DETAIL_SELECT = `
   id, slug, name, model, registration_year, fuel_type, transmission, km_driven,
   lease_amount, lease_period, view_count, published_at, approved_by, location_id, brand_id,
   description, contact_phone, direct_owner, condition, engine_capacity, seats, color,
-  features, service_charge_percent,
+  features, service_charge_percent, ownership_count,
   brands ( name ),
   vehicle_images ( url, medium_url, thumbnail_url, is_cover, sort_order )
 `;
@@ -124,6 +136,7 @@ type VehicleDetailRow = Omit<VehicleCardRow, "vehicle_images"> & {
   color: string | null;
   features: string[];
   service_charge_percent: number | null;
+  ownership_count: number | null;
   vehicle_images: { url: string; medium_url: string | null; thumbnail_url: string | null; is_cover: boolean; sort_order: number }[];
 };
 
@@ -148,6 +161,7 @@ export async function getVehicleBySlug(slug: string): Promise<VehicleDetail | nu
     color: row.color,
     features: row.features ?? [],
     serviceChargePercent: row.service_charge_percent,
+    ownershipCount: row.ownership_count,
     images: [...row.vehicle_images]
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((image) => ({ url: image.url, mediumUrl: image.medium_url, thumbnailUrl: image.thumbnail_url })),

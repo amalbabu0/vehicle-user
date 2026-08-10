@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Car } from "lucide-react";
+import { Camera, Car } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type GalleryImage = { url: string; mediumUrl: string | null; thumbnailUrl: string | null };
@@ -31,6 +31,18 @@ export function VehicleGallery({ images, name }: { images: GalleryImage[]; name:
           sizes="(max-width: 1024px) 100vw, 60vw"
           className="object-cover"
         />
+        <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-600/30 bg-background/80 px-3 py-1 backdrop-blur-md">
+          <span className="size-1.5 rounded-full bg-emerald-500" />
+          <span className="text-xs font-semibold">Available for lease</span>
+        </div>
+        {images.length > 1 ? (
+          <div className="absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-1 text-white backdrop-blur-md">
+            <Camera className="size-3.5" />
+            <span className="text-xs font-medium">
+              {activeIndex + 1}/{images.length}
+            </span>
+          </div>
+        ) : null}
       </div>
       {images.length > 1 ? (
         <div className="flex gap-2 overflow-x-auto pb-1">
