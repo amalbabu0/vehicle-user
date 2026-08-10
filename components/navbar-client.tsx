@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { ChevronDown, Moon, Sun, Heart, LogOut, Monitor, Settings } from "lucide-react";
@@ -87,11 +88,9 @@ export function NavbarClient() {
   return (
     <header className="glass-surface sticky top-0 z-40 border-b border-transparent px-4 py-3 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-        <Link href="/" className="flex shrink-0 items-center gap-1.5 text-base font-semibold no-underline text-foreground sm:gap-2 sm:text-lg">
-          <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-foreground text-[10px] font-extrabold tracking-tighter text-background sm:size-7">
-            KLH
-          </span>
-          <span className="whitespace-nowrap">Kerala Lease Hub</span>
+        <Link href="/" className="relative h-8 w-32 shrink-0 sm:h-9 sm:w-36" aria-label="Kerala Lease Hub — home">
+          <Image src="/branding/logo-footer.webp" alt="Kerala Lease Hub" fill className="object-contain object-left dark:hidden" priority />
+          <Image src="/branding/logo-footer-dark.avif" alt="Kerala Lease Hub" fill className="hidden object-contain object-left dark:block" priority />
         </Link>
 
         <nav className="hidden items-center gap-6 lg:flex">

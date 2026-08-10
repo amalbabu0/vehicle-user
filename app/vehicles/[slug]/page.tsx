@@ -59,6 +59,17 @@ export default async function VehicleDetailPage({ params }: PageProps) {
   const phoneDigits = vehicle.contactPhone.replace(/\D/g, "");
   const whatsappNumber = phoneDigits.length === 10 ? `91${phoneDigits}` : phoneDigits;
 
+  // Pre-fills the owner's chat with the listing link and key details instead
+  // of opening to a blank conversation — the owner sees at a glance which
+  // vehicle the enquiry is about without the lessee having to type it out.
+  const vehicleUrl = `${env.SITE_URL}/vehicles/${vehicle.slug}`;
+  const enquiryMessage = [
+    `Hi, I'm interested in leasing your ${vehicle.name}${vehicle.registrationYear ? ` (${vehicle.registrationYear})` : ""}.`,
+    `₹${vehicle.leaseAmount.toLocaleString("en-IN")} / ${vehicle.leasePeriod}`,
+    vehicleUrl,
+  ].join("\n");
+  const whatsappHref = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(enquiryMessage)}`;
+
   return (
     <>
       <BreadcrumbJsonLd
@@ -97,7 +108,7 @@ export default async function VehicleDetailPage({ params }: PageProps) {
                   <Phone className="size-4" /> Call
                 </a>
                 <a
-                  href={`https://wa.me/${whatsappNumber}`}
+                  href={whatsappHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 rounded-(--glass-radius) border border-emerald-600 px-4 py-2.5 text-sm font-medium text-emerald-600 no-underline transition hover:bg-emerald-600/10"
@@ -190,7 +201,7 @@ export default async function VehicleDetailPage({ params }: PageProps) {
                   <Phone className="size-4" /> Call owner
                 </a>
                 <a
-                  href={`https://wa.me/${whatsappNumber}`}
+                  href={whatsappHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex w-full items-center justify-center gap-2 rounded-(--glass-radius) border border-emerald-600 px-4 py-2.5 text-sm font-medium text-emerald-600 no-underline transition hover:bg-emerald-600/10"
