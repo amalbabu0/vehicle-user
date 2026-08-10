@@ -15,7 +15,7 @@ export function SiteJsonLd() {
     // Absolute URL, per Google's structured-data guidelines for the Logo
     // rich result / knowledge panel — a relative path won't be picked up.
     logo: `${env.SITE_URL}/branding/logo-footer.webp`,
-    description: "Kerala's vehicle marketplace for buying, selling, and leasing used cars and bikes directly from owners.",
+    description: "Kerala's dedicated vehicle leasing platform — lease cars, bikes, and every kind of vehicle directly from owners.",
     areaServed: { "@type": "State", name: "Kerala" },
   };
 

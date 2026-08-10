@@ -5,13 +5,13 @@ import { Footer } from "@/components/footer";
 import { createPublicClient } from "@/lib/supabase/public-client";
 import { buildPageOg } from "@/lib/seo/page-metadata";
 
-const description = "List your car or bike for sale or lease on Kerala Lease Hub.";
+const description = "List your car, bike, or any vehicle for lease on Kerala Lease Hub.";
 
 export const metadata: Metadata = {
-  title: "Sell Your Vehicle",
+  title: "List Your Vehicle for Lease",
   description,
   alternates: { canonical: "/sell" },
-  ...buildPageOg({ title: "Sell Your Vehicle", description, path: "/sell" }),
+  ...buildPageOg({ title: "List Your Vehicle for Lease", description, path: "/sell" }),
 };
 
 export default async function SellPage() {
@@ -24,10 +24,10 @@ export default async function SellPage() {
     <>
       <Navbar />
       <main className="mx-auto max-w-2xl px-4 py-12 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-semibold">Sell your vehicle</h1>
+        <h1 className="text-3xl font-semibold">List your vehicle for lease</h1>
         <p className="mt-4 text-sm leading-6 text-muted-foreground">
           Listings on Kerala Lease Hub are created by our team so every vehicle is checked and structured
-          consistently before it goes live. To get your car or bike listed, reach out with the details and photos:
+          consistently before it goes live. To get your car, bike, or any vehicle listed for lease, reach out with the details and photos:
         </p>
         {hasContact ? (
           <ul className="mt-6 space-y-3 text-sm">

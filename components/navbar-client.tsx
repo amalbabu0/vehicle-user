@@ -23,7 +23,7 @@ const NAV_LINKS = [
   { href: "/vehicles", label: "Browse Vehicles" },
   { href: "/vehicles?category=cars", label: "Cars" },
   { href: "/vehicles?category=bikes", label: "Bikes" },
-  { href: "/sell", label: "Sell Your Vehicle" },
+  { href: "/sell", label: "List Your Vehicle" },
 ];
 
 type NavbarUser = { fullName: string | null; avatarUrl: string | null; email: string } | null;

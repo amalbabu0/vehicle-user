@@ -19,10 +19,10 @@ export function HeroContent({ districts, categories }: { districts: DistrictOpti
       />
       <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
         <h1 className="animate-in fade-in slide-in-from-bottom-4 duration-500 text-balance text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-          Kerala&apos;s marketplace for used cars &amp; bikes
+          Kerala&apos;s vehicle leasing platform — cars, bikes &amp; more
         </h1>
         <p className="animate-in fade-in slide-in-from-bottom-4 delay-100 duration-500 mt-4 max-w-2xl text-balance text-base text-muted-foreground sm:text-lg fill-mode-both">
-          Buy, sell, or lease vehicles directly from owners across Kerala — verified listings, no hidden charges.
+          Lease vehicles of every kind directly from owners across Kerala — verified listings, no hidden charges.
         </p>
 
         <div className="animate-in fade-in slide-in-from-bottom-4 delay-200 duration-500 fill-mode-both mt-8 w-full">
@@ -37,7 +37,7 @@ export function HeroContent({ districts, categories }: { districts: DistrictOpti
           </Link>
           <Link href="/sell" className="flex-1 no-underline sm:flex-none">
             <Button size="lg" className="w-full gap-2">
-              <Tag className="size-4" /> Sell Your Vehicle
+              <Tag className="size-4" /> List Your Vehicle
             </Button>
           </Link>
         </div>

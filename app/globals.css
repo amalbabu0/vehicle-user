@@ -179,14 +179,4 @@
     );
     pointer-events: none;
   }
-
-  /* Hides the scrollbar on horizontally snap-scrolling rows (e.g. the
-     Featured vehicles carousel) while keeping the element scrollable. */
-  .scrollbar-hide {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
 }

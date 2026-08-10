@@ -18,8 +18,18 @@ export function VehicleJsonLd({ vehicle }: { vehicle: VehicleCardData }) {
     url: `${env.SITE_URL}/vehicles/${vehicle.slug}`,
     offers: {
       "@type": "Offer",
+      // Marks this explicitly as a lease offer, not a sale — the platform
+      // is leasing-only, and an Offer with no businessFunction is commonly
+      // interpreted by parsers as "for sale" by default.
+      businessFunction: "https://purl.org/goodrelations/v1#LeaseOut",
       price: vehicle.leaseAmount,
       priceCurrency: "INR",
+      priceSpecification: {
+        "@type": "UnitPriceSpecification",
+        price: vehicle.leaseAmount,
+        priceCurrency: "INR",
+        unitText: vehicle.leasePeriod,
+      },
       availability: "https://schema.org/InStock",
       url: `${env.SITE_URL}/vehicles/${vehicle.slug}`,
     },

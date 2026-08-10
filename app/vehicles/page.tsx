@@ -74,7 +74,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const qs = buildCanonicalQueryString(filters, page);
   const canonical = qs.toString() ? `/vehicles?${qs.toString()}` : "/vehicles";
   const title = page > 1 ? `Browse Vehicles — Page ${page}` : "Browse Vehicles";
-  const description = "Browse used cars and bikes for sale or lease across Kerala — filter by brand, price, fuel type, transmission, and district.";
+  const description = "Browse cars, bikes, and every kind of vehicle available for lease across Kerala — filter by brand, price, fuel type, transmission, and district.";
 
   return {
     title,

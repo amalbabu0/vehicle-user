@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Mail, Phone } from "lucide-react";
+import { Mail, Phone, MessageCircle } from "lucide-react";
 import { createPublicClient } from "@/lib/supabase/public-client";
 
 type ContactInfo = { email?: string; phone?: string; whatsapp?: string };
@@ -12,43 +12,50 @@ async function getContactInfo(): Promise<ContactInfo> {
 }
 
 const FOOTER_LINKS = [
+  { href: "/vehicles", label: "Browse Vehicles" },
+  { href: "/sell", label: "List Your Vehicle" },
   { href: "/about", label: "About" },
+  { href: "/#faq", label: "FAQs" },
   { href: "/contact", label: "Contact" },
+];
+
+const LEGAL_LINKS = [
   { href: "/privacy", label: "Privacy Policy" },
   { href: "/terms", label: "Terms" },
-  { href: "/#faq", label: "FAQs" },
 ];
 
 export async function Footer() {
   const contact = await getContactInfo();
+  const hasContact = Boolean(contact.email || contact.phone || contact.whatsapp);
 
   return (
-    <footer className="mt-16 border-t border-border">
+    <footer className="mt-16 border-t border-border bg-muted/30">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3">
-          <div>
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-[1.3fr_1fr_1fr]">
+          <div className="col-span-2 sm:col-span-1">
             <div className="relative h-11 w-40">
               <Image
                 src="/branding/logo-footer.webp"
-                alt="Kerala Lease Hub — lease used cars and bikes across Kerala"
+                alt="Kerala Lease Hub — lease cars, bikes, and every kind of vehicle across Kerala"
                 fill
                 className="object-contain object-left dark:hidden"
               />
               <Image
                 src="/branding/logo-footer-dark.avif"
-                alt="Kerala Lease Hub — lease used cars and bikes across Kerala"
+                alt="Kerala Lease Hub — lease cars, bikes, and every kind of vehicle across Kerala"
                 fill
                 className="hidden object-contain object-left dark:block"
               />
             </div>
-            <p className="mt-3 max-w-xs text-sm text-muted-foreground">
-              Kerala&apos;s vehicle marketplace for buying, selling, and leasing used cars and bikes directly from owners.
+            <p className="mt-3 max-w-xs text-sm leading-6 text-muted-foreground">
+              Kerala&apos;s dedicated vehicle leasing platform — lease cars, bikes, and every kind of vehicle directly
+              from owners.
             </p>
           </div>
 
           <div>
-            <p className="text-sm font-semibold">Links</p>
-            <ul className="mt-3 space-y-2">
+            <p className="text-xs font-semibold tracking-wide text-foreground/80 uppercase">Links</p>
+            <ul className="mt-4 space-y-2.5">
               {FOOTER_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-sm text-muted-foreground no-underline hover:text-foreground">
@@ -59,31 +66,52 @@ export async function Footer() {
             </ul>
           </div>
 
-          {(contact.email || contact.phone) && (
+          {hasContact ? (
             <div>
-              <p className="text-sm font-semibold">Contact</p>
-              <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                {contact.email ? (
+              <p className="text-xs font-semibold tracking-wide text-foreground/80 uppercase">Contact</p>
+              <ul className="mt-4 space-y-2.5 text-sm text-muted-foreground">
+                {contact.whatsapp ? (
                   <li>
-                    <a href={`mailto:${contact.email}`} className="inline-flex items-center gap-2 no-underline hover:text-foreground">
-                      <Mail className="size-4" /> {contact.email}
+                    <a
+                      href={`https://wa.me/${contact.whatsapp.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 no-underline hover:text-foreground"
+                    >
+                      <MessageCircle className="size-4 shrink-0 text-emerald-600" /> WhatsApp
                     </a>
                   </li>
                 ) : null}
                 {contact.phone ? (
                   <li>
                     <a href={`tel:${contact.phone}`} className="inline-flex items-center gap-2 no-underline hover:text-foreground">
-                      <Phone className="size-4" /> {contact.phone}
+                      <Phone className="size-4 shrink-0" /> {contact.phone}
+                    </a>
+                  </li>
+                ) : null}
+                {contact.email ? (
+                  <li>
+                    <a href={`mailto:${contact.email}`} className="inline-flex items-center gap-2 break-all no-underline hover:text-foreground">
+                      <Mail className="size-4 shrink-0" /> {contact.email}
                     </a>
                   </li>
                 ) : null}
               </ul>
             </div>
-          )}
+          ) : null}
         </div>
 
-        <div className="mt-8 border-t border-border pt-6 text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Kerala Lease Hub. All rights reserved.
+        <div className="mt-10 flex flex-col gap-4 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <p>© {new Date().getFullYear()} Kerala Lease Hub. All rights reserved.</p>
+          <ul className="flex items-center gap-4">
+            {LEGAL_LINKS.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="no-underline hover:text-foreground">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </footer>

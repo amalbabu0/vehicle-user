@@ -9,19 +9,12 @@ export function VehicleGridSection({
   subtitle,
   vehicles,
   viewAllHref,
-  layout = "grid",
 }: {
   id?: string;
   title: string;
   subtitle?: string;
   vehicles: VehicleCardData[];
   viewAllHref?: string;
-  /** "scroll" renders a horizontally snap-scrolling row (mobile-friendly for
-   * a short, hand-picked set like Featured, and lets cards peek off the
-   * viewport edge); "grid" is the default browse layout used everywhere
-   * else. Only the scroll row's own padding differs from the section's —
-   * everything else keeps the site-wide px-4 sm:px-6 lg:px-8 rhythm. */
-  layout?: "grid" | "scroll";
 }) {
   if (vehicles.length === 0) return null;
 
@@ -39,21 +32,11 @@ export function VehicleGridSection({
         ) : null}
       </div>
 
-      {layout === "scroll" ? (
-        <div className="scrollbar-hide mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:gap-5 sm:px-6 lg:px-8">
-          {vehicles.map((vehicle) => (
-            <div key={vehicle.id} className="w-64 shrink-0 snap-start sm:w-72">
-              <VehicleCard vehicle={vehicle} />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="mt-6 grid grid-cols-2 gap-3 px-4 sm:gap-5 sm:px-6 lg:grid-cols-4 lg:px-8">
-          {vehicles.map((vehicle) => (
-            <VehicleCard key={vehicle.id} vehicle={vehicle} />
-          ))}
-        </div>
-      )}
+      <div className="mt-6 grid grid-cols-2 gap-3 px-4 sm:gap-5 sm:px-6 lg:grid-cols-4 lg:px-8">
+        {vehicles.map((vehicle) => (
+          <VehicleCard key={vehicle.id} vehicle={vehicle} />
+        ))}
+      </div>
     </section>
   );
 }

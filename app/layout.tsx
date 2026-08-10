@@ -14,18 +14,18 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 const SITE_NAME = "Kerala Lease Hub";
 const SITE_DESCRIPTION =
-  "Kerala's trusted vehicle marketplace — buy, sell, and lease used cars and bikes directly from verified owners. No hidden charges, direct contact, fast listing approval.";
+  "Kerala's dedicated vehicle leasing platform — lease cars, bikes, and every kind of vehicle directly from verified owners across Kerala. No hidden charges, direct contact, fast listing approval.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(env.SITE_URL),
   title: {
-    default: `${SITE_NAME} — Buy, Sell & Lease Used Cars & Bikes in Kerala`,
+    default: `${SITE_NAME} — Lease Cars, Bikes & All Vehicles in Kerala`,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
   keywords: [
-    "used cars Kerala", "buy used cars Kerala", "sell used cars Kerala", "used bikes Kerala",
-    "Kerala vehicle marketplace", "second hand cars", "second hand bikes", "Kerala Lease Hub",
+    "vehicle leasing Kerala", "lease a car Kerala", "lease a bike Kerala", "car leasing Kerala",
+    "bike leasing Kerala", "Kerala vehicle lease platform", "lease vehicles Kerala", "Kerala Lease Hub",
   ],
   alternates: { canonical: "/" },
   robots: {
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
-    title: `${SITE_NAME} — Buy, Sell & Lease Used Cars & Bikes in Kerala`,
+    title: `${SITE_NAME} — Lease Cars, Bikes & All Vehicles in Kerala`,
     description: SITE_DESCRIPTION,
     url: env.SITE_URL,
     locale: "en_IN",
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: `${SITE_NAME} — Buy, Sell & Lease Used Cars & Bikes in Kerala`,
+    title: `${SITE_NAME} — Lease Cars, Bikes & All Vehicles in Kerala`,
     description: SITE_DESCRIPTION,
     images: ["/branding/logo-footer.webp"],
   },
