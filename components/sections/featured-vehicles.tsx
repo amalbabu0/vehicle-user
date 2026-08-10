@@ -10,6 +10,7 @@ export async function FeaturedVehicles() {
       subtitle="Hand-picked and most-viewed listings"
       vehicles={vehicles}
       viewAllHref="/vehicles"
+      layout="scroll"
     />
   );
 }

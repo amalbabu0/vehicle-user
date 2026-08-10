@@ -29,14 +29,14 @@ export function HeroContent({ districts, categories }: { districts: DistrictOpti
           <HeroSearchForm districts={districts} categories={categories} />
         </div>
 
-        <div className="animate-in fade-in slide-in-from-bottom-4 delay-300 duration-500 fill-mode-both mt-6 flex flex-wrap items-center justify-center gap-3">
-          <Link href="/vehicles" className="no-underline">
-            <Button size="lg" variant="outline" className="gap-2">
+        <div className="animate-in fade-in slide-in-from-bottom-4 delay-300 duration-500 fill-mode-both mt-6 flex w-full max-w-md gap-3 sm:w-auto sm:max-w-none">
+          <Link href="/vehicles" className="flex-1 no-underline sm:flex-none">
+            <Button size="lg" variant="outline" className="w-full gap-2">
               <Car className="size-4" /> Browse Vehicles
             </Button>
           </Link>
-          <Link href="/sell" className="no-underline">
-            <Button size="lg" className="gap-2">
+          <Link href="/sell" className="flex-1 no-underline sm:flex-none">
+            <Button size="lg" className="w-full gap-2">
               <Tag className="size-4" /> Sell Your Vehicle
             </Button>
           </Link>

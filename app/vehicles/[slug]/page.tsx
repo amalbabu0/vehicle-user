@@ -78,10 +78,17 @@ export default async function VehicleDetailPage({ params }: PageProps) {
             {/* Mobile/tablet: contact CTAs surface right under the gallery
                 instead of being buried below the full spec sheet. */}
             <div className="glass-surface glass-specular space-y-3 rounded-(--glass-radius-lg) p-4 lg:hidden">
-              <p className="text-2xl font-bold">
-                ₹{vehicle.leaseAmount.toLocaleString("en-IN")}
-                <span className="text-sm font-normal text-muted-foreground"> / {vehicle.leasePeriod}</span>
-              </p>
+              <div>
+                <p className="text-2xl font-bold">
+                  ₹{vehicle.leaseAmount.toLocaleString("en-IN")}
+                  <span className="text-sm font-normal text-muted-foreground"> / {vehicle.leasePeriod}</span>
+                </p>
+                {/* Sits with the price, not in the spec grid — it's money the
+                    lessee pays, not a property of the vehicle. */}
+                {vehicle.serviceChargePercent ? (
+                  <p className="mt-0.5 text-xs text-muted-foreground">+ {vehicle.serviceChargePercent}% service charge</p>
+                ) : null}
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <a
                   href={`tel:${phoneDigits}`}
@@ -166,6 +173,11 @@ export default async function VehicleDetailPage({ params }: PageProps) {
                 ₹{vehicle.leaseAmount.toLocaleString("en-IN")}
                 <span className="text-sm font-normal text-muted-foreground"> / {vehicle.leasePeriod}</span>
               </p>
+              {/* Sits with the price, not in the spec grid — it's money the
+                  lessee pays, not a property of the vehicle. */}
+              {vehicle.serviceChargePercent ? (
+                <p className="mt-1 text-xs text-muted-foreground">+ {vehicle.serviceChargePercent}% service charge</p>
+              ) : null}
               <p className="mt-1 text-xs text-muted-foreground">
                 {vehicle.directOwner ? "Listed by direct owner — no broker fees." : "Listed via agent."}
               </p>

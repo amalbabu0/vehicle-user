@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { ChevronDown, Moon, Sun, Heart, LogOut, Car, Monitor, Settings } from "lucide-react";
+import { ChevronDown, Moon, Sun, Heart, LogOut, Monitor, Settings } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -88,7 +88,9 @@ export function NavbarClient() {
     <header className="glass-surface sticky top-0 z-40 border-b border-transparent px-4 py-3 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
         <Link href="/" className="flex shrink-0 items-center gap-1.5 text-base font-semibold no-underline text-foreground sm:gap-2 sm:text-lg">
-          <Car className="size-5 shrink-0 text-primary sm:size-6" />
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-foreground text-[10px] font-extrabold tracking-tighter text-background sm:size-7">
+            KLH
+          </span>
           <span className="whitespace-nowrap">Kerala Lease Hub</span>
         </Link>
 

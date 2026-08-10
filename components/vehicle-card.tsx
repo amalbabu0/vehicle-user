@@ -50,14 +50,14 @@ export function VehicleCard({
               <BadgeCheck className="size-3.5" /> Verified
             </span>
           )}
+          <span className="absolute bottom-2 left-2 rounded bg-background/80 px-2 py-1 text-xs font-semibold backdrop-blur-sm">
+            ₹{vehicle.leaseAmount.toLocaleString("en-IN")}
+            <span className="font-normal text-muted-foreground"> /{vehicle.leasePeriod}</span>
+          </span>
         </div>
 
         <div className="space-y-2 p-4">
           <h3 className="line-clamp-1 font-semibold">{vehicle.name}</h3>
-          <p className="text-lg font-bold">
-            ₹{vehicle.leaseAmount.toLocaleString("en-IN")}
-            <span className="text-xs font-normal text-muted-foreground"> / {vehicle.leasePeriod}</span>
-          </p>
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
             {vehicle.registrationYear ? <span>{vehicle.registrationYear}</span> : null}
             {vehicle.fuelType ? <span>{vehicle.fuelType}</span> : null}

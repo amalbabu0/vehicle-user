@@ -29,9 +29,9 @@ export function Faq() {
   return (
     <section id="faq" className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
       <h2 className="text-center text-2xl font-semibold sm:text-3xl">Frequently asked questions</h2>
-      <Accordion type="single" collapsible className="mt-6">
+      <Accordion type="single" collapsible className="mt-6 space-y-2">
         {FAQS.map((faq) => (
-          <AccordionItem key={faq.question} value={faq.question}>
+          <AccordionItem key={faq.question} value={faq.question} className="rounded-lg border border-border bg-muted/30 px-4 border-b-0">
             <AccordionTrigger>{faq.question}</AccordionTrigger>
             <AccordionContent>{faq.answer}</AccordionContent>
           </AccordionItem>
