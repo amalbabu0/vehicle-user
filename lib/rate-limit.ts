@@ -24,3 +24,16 @@ export async function checkRateLimit(
   const { success, remaining } = await limiter.limit(identifier);
   return { success, remaining };
 }
+
+// IP-only keys let a distributed attacker (many IPs) keep grinding one
+// target email, since each IP gets its own fresh 5-attempt budget. Keying
+// on the email too closes that: either budget running out blocks the
+// attempt, regardless of how many IPs are spreading the load.
+export async function checkAuthRateLimit(action: string, ip: string, email: string): Promise<boolean> {
+  const normalizedEmail = email.trim().toLowerCase();
+  const [byIp, byEmail] = await Promise.all([
+    checkRateLimit(authRateLimit, `${action}:${ip}`),
+    checkRateLimit(authRateLimit, `${action}:email:${normalizedEmail}`),
+  ]);
+  return byIp.success && byEmail.success;
+}

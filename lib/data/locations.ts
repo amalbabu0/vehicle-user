@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createPublicClient } from "@/lib/supabase/public-client";
 
 export type LocationLookup = Map<string, { name: string; districtName: string }>;
@@ -7,8 +8,14 @@ export type LocationLookup = Map<string, { name: string; districtName: string }>
  * loads the whole (small, ~90 row) table once and resolves each location to
  * its district name, whether the row itself is a district (no parent) or a
  * taluk (parent is the district).
+ *
+ * Wrapped in React's `cache()` — a vehicle detail page calls this once via
+ * getVehicleBySlug and again via getRelatedVehicles, and a search page can
+ * call it once per result page; `cache()` dedupes those into a single DB
+ * round trip per request instead of one per call, with no staleness risk
+ * (it only memoizes within one render, never across requests).
  */
-export async function getLocationLookup(): Promise<LocationLookup> {
+export const getLocationLookup = cache(async (): Promise<LocationLookup> => {
   const supabase = createPublicClient();
   const { data } = await supabase.from("locations").select("id, name, parent_location_id");
   const rows = data ?? [];
@@ -20,12 +27,12 @@ export async function getLocationLookup(): Promise<LocationLookup> {
     lookup.set(row.id, { name: row.name, districtName: parent ? parent.name : row.name });
   }
   return lookup;
-}
+});
 
 export type DistrictOption = { id: string; name: string; slug: string };
 
 /** Districts are the top-level location rows (no parent). */
-export async function getDistricts(): Promise<DistrictOption[]> {
+export const getDistricts = cache(async (): Promise<DistrictOption[]> => {
   const supabase = createPublicClient();
   const { data } = await supabase
     .from("locations")
@@ -33,4 +40,4 @@ export async function getDistricts(): Promise<DistrictOption[]> {
     .is("parent_location_id", null)
     .order("name");
   return data ?? [];
-}
+});

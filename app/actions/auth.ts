@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { isValidPhoneNumber } from "libphonenumber-js/min";
 import { createClient } from "@/lib/supabase/server";
 import { verifyTurnstileToken } from "@/lib/turnstile";
-import { authRateLimit, checkRateLimit } from "@/lib/rate-limit";
+import { checkAuthRateLimit } from "@/lib/rate-limit";
 import { env } from "@/lib/env";
 import type { Json } from "@/lib/supabase/database.types";
 
@@ -133,7 +133,7 @@ export async function register(_prevState: ActionState, formData: FormData): Pro
   }
 
   const ip = await clientIp();
-  const { success: withinLimit } = await checkRateLimit(authRateLimit, `register:${ip}`);
+  const withinLimit = await checkAuthRateLimit("register", ip, validated.data.email);
   if (!withinLimit) {
     return { message: "Too many attempts. Try again in a few minutes." };
   }
@@ -161,8 +161,11 @@ export async function register(_prevState: ActionState, formData: FormData): Pro
     },
   });
 
+  // Generic on failure, same as forgotPassword() below — Supabase's own
+  // error text differs for "email already registered" vs. other failures,
+  // which would otherwise turn this into an account-enumeration oracle.
   if (error) {
-    return { message: error.message };
+    return { message: "Something went wrong. If you already have an account, try signing in instead." };
   }
 
   if (data.user) {
@@ -189,7 +192,7 @@ export async function login(_prevState: ActionState, formData: FormData): Promis
   }
 
   const ip = await clientIp();
-  const { success: withinLimit } = await checkRateLimit(authRateLimit, `login:${ip}`);
+  const withinLimit = await checkAuthRateLimit("login", ip, validated.data.email);
   if (!withinLimit) {
     return { message: "Too many attempts. Try again in a few minutes." };
   }
@@ -273,7 +276,7 @@ export async function forgotPassword(_prevState: ActionState, formData: FormData
   }
 
   const ip = await clientIp();
-  const { success: withinLimit } = await checkRateLimit(authRateLimit, `forgot:${ip}`);
+  const withinLimit = await checkAuthRateLimit("forgot", ip, validated.data.email);
   if (!withinLimit) {
     return { message: "Too many attempts. Try again in a few minutes." };
   }

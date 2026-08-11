@@ -1,5 +1,6 @@
 import { createPublicClient } from "@/lib/supabase/public-client";
 import { getLocationLookup, type LocationLookup } from "@/lib/data/locations";
+import { formatLeasePeriod } from "@/lib/utils";
 import type { VehicleCardData } from "@/lib/types/vehicle-card";
 
 // Shared select for anything that renders a VehicleCard — published listings
@@ -48,7 +49,7 @@ export function mapVehicleRowToCard(row: VehicleCardRow, locations: LocationLook
     transmission: row.transmission,
     kmDriven: row.km_driven,
     leaseAmount: row.lease_amount,
-    leasePeriod: row.lease_period,
+    leasePeriod: formatLeasePeriod(row.lease_period),
     districtName: location?.districtName ?? null,
     locationName: location?.name ?? null,
     coverImageUrl: cover?.url ?? null,
