@@ -1,4 +1,5 @@
 import { env } from "@/lib/env";
+import { getSocialLinks } from "@/lib/data/site-settings";
 
 /**
  * Site-wide JSON-LD (Organization + WebSite w/ SearchAction) — rendered once
@@ -6,7 +7,13 @@ import { env } from "@/lib/env";
  * lives on the pages that actually have that context (search results,
  * vehicle detail).
  */
-export function SiteJsonLd() {
+export async function SiteJsonLd() {
+  const social = await getSocialLinks();
+  // Google's Organization guidelines recommend sameAs to link the entity to
+  // its other official profiles — only include ones actually set, never a
+  // placeholder/empty string.
+  const sameAs = [social.facebook, social.instagram].filter((url): url is string => Boolean(url));
+
   const organization = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -17,6 +24,7 @@ export function SiteJsonLd() {
     logo: `${env.SITE_URL}/branding/logo-footer.webp`,
     description: "Kerala's dedicated vehicle leasing platform — lease cars, bikes, and every kind of vehicle directly from owners.",
     areaServed: { "@type": "State", name: "Kerala" },
+    ...(sameAs.length > 0 ? { sameAs } : {}),
   };
 
   const website = {

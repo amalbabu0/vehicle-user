@@ -1,25 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, Phone, MessageCircle, ShieldCheck, PhoneCall, ReceiptText } from "lucide-react";
-import { createPublicClient } from "@/lib/supabase/public-client";
+import { getContactInfo, getSocialLinks } from "@/lib/data/site-settings";
 import { FacebookIcon, InstagramIcon, WhatsappIcon } from "@/components/icons/social-icons";
-
-type ContactInfo = { email?: string; phone?: string; whatsapp?: string };
-// Same site_settings row the admin app's Settings → Social tab writes
-// (lib/admin/settings-data.ts's SocialLinks) — read-only here.
-type SocialLinks = { facebook?: string; instagram?: string };
-
-async function getContactInfo(): Promise<ContactInfo> {
-  const supabase = createPublicClient();
-  const { data } = await supabase.from("site_settings").select("value").eq("key", "contact_info").maybeSingle();
-  return (data?.value as ContactInfo) ?? {};
-}
-
-async function getSocialLinks(): Promise<SocialLinks> {
-  const supabase = createPublicClient();
-  const { data } = await supabase.from("site_settings").select("value").eq("key", "social_links").maybeSingle();
-  return (data?.value as SocialLinks) ?? {};
-}
 
 const FOOTER_LINKS = [
   { href: "/vehicles", label: "Browse Vehicles" },

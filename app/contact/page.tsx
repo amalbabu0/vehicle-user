@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Mail, Phone } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { createPublicClient } from "@/lib/supabase/public-client";
+import { getContactInfo } from "@/lib/data/site-settings";
 import { buildPageOg } from "@/lib/seo/page-metadata";
 
 const description = "Get in touch with Kerala Lease Hub for questions about listings, leasing, or your account.";
@@ -15,9 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ContactPage() {
-  const supabase = createPublicClient();
-  const { data } = await supabase.from("site_settings").select("value").eq("key", "contact_info").maybeSingle();
-  const contact = (data?.value as { email?: string; phone?: string; whatsapp?: string }) ?? {};
+  const contact = await getContactInfo();
   const hasContact = Boolean(contact.email || contact.phone || contact.whatsapp);
 
   return (
