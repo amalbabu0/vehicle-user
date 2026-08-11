@@ -105,6 +105,7 @@ export type VehicleDetail = VehicleCardData & {
   images: { url: string; mediumUrl: string | null; thumbnailUrl: string | null }[];
   brandId: string | null;
   locationId: string | null;
+  categoryId: string | null;
 };
 
 const OWNERSHIP_ORDINALS = ["1st", "2nd", "3rd", "4th", "5th", "6th"];
@@ -120,7 +121,7 @@ export function formatOwnership(count: number | null): string | null {
 
 const VEHICLE_DETAIL_SELECT = `
   id, slug, name, model, registration_year, fuel_type, transmission, km_driven,
-  lease_amount, lease_period, view_count, published_at, approved_by, location_id, brand_id, booking_status,
+  lease_amount, lease_period, view_count, published_at, approved_by, location_id, brand_id, category_id, booking_status,
   description, contact_phone, direct_owner, condition, engine_capacity, seats, color,
   features, service_charge_percent, ownership_count,
   brands ( name ),
@@ -129,6 +130,7 @@ const VEHICLE_DETAIL_SELECT = `
 
 type VehicleDetailRow = Omit<VehicleCardRow, "vehicle_images"> & {
   brand_id: string | null;
+  category_id: string | null;
   description: string | null;
   contact_phone: string;
   direct_owner: boolean;
@@ -169,18 +171,21 @@ export async function getVehicleBySlug(slug: string): Promise<VehicleDetail | nu
       .map((image) => ({ url: image.url, mediumUrl: image.medium_url, thumbnailUrl: image.thumbnail_url })),
     brandId: row.brand_id,
     locationId: row.location_id,
+    categoryId: row.category_id,
   };
 }
 
-/** Related-listings for the detail page's internal-linking section — same
- * brand first (closest match), topped up with same-district listings if
- * the brand alone doesn't fill `limit`. Excludes the current vehicle.
+/** Related-listings for the detail page's internal-linking section —
+ * same vehicle type (category) first since that's what "similar" actually
+ * means to a lessee (a bike page shouldn't recommend a bus), then same
+ * brand within that type, then topped up with same-district listings if
+ * neither fills `limit`. Excludes the current vehicle.
  * A real internal link between individual vehicle pages didn't exist
  * anywhere before this (see SEO.md audit) — without it, published
  * listings were only ever reachable via search/homepage, not from each
  * other, which is exactly what makes a page an SEO "orphan". */
 export async function getRelatedVehicles(
-  current: { id: string; brandId: string | null; locationId: string | null },
+  current: { id: string; brandId: string | null; locationId: string | null; categoryId: string | null },
   limit = 8
 ): Promise<VehicleCardData[]> {
   const supabase = createPublicClient();
@@ -188,21 +193,39 @@ export async function getRelatedVehicles(
   const seen = new Set([current.id]);
   const results: VehicleCardRow[] = [];
 
-  if (current.brandId) {
-    const { data } = await supabase
-      .from("vehicles")
-      .select(VEHICLE_CARD_SELECT)
-      .eq("status", "published")
-      .eq("brand_id", current.brandId)
-      .neq("id", current.id)
-      .order("published_at", { ascending: false })
-      .limit(limit);
-    for (const row of (data ?? []) as unknown as VehicleCardRow[]) {
+  const addRows = (rows: VehicleCardRow[]) => {
+    for (const row of rows) {
+      if (results.length >= limit) break;
       if (!seen.has(row.id)) {
         seen.add(row.id);
         results.push(row);
       }
     }
+  };
+
+  if (current.categoryId && current.brandId) {
+    const { data } = await supabase
+      .from("vehicles")
+      .select(VEHICLE_CARD_SELECT)
+      .eq("status", "published")
+      .eq("category_id", current.categoryId)
+      .eq("brand_id", current.brandId)
+      .neq("id", current.id)
+      .order("published_at", { ascending: false })
+      .limit(limit);
+    addRows((data ?? []) as unknown as VehicleCardRow[]);
+  }
+
+  if (results.length < limit && current.categoryId) {
+    const { data } = await supabase
+      .from("vehicles")
+      .select(VEHICLE_CARD_SELECT)
+      .eq("status", "published")
+      .eq("category_id", current.categoryId)
+      .neq("id", current.id)
+      .order("published_at", { ascending: false })
+      .limit(limit - results.length + seen.size);
+    addRows((data ?? []) as unknown as VehicleCardRow[]);
   }
 
   if (results.length < limit && current.locationId) {
@@ -214,13 +237,7 @@ export async function getRelatedVehicles(
       .neq("id", current.id)
       .order("published_at", { ascending: false })
       .limit(limit - results.length + seen.size);
-    for (const row of (data ?? []) as unknown as VehicleCardRow[]) {
-      if (results.length >= limit) break;
-      if (!seen.has(row.id)) {
-        seen.add(row.id);
-        results.push(row);
-      }
-    }
+    addRows((data ?? []) as unknown as VehicleCardRow[]);
   }
 
   return results.slice(0, limit).map((row) => mapVehicleRowToCard(row, locations));

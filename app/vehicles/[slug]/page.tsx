@@ -105,7 +105,10 @@ export default async function VehicleDetailPage({ params }: PageProps) {
   // — see PERFORMANCE.md.
   void incrementViewCount(vehicle.id);
 
-  const relatedVehicles = await getRelatedVehicles({ id: vehicle.id, brandId: vehicle.brandId, locationId: vehicle.locationId }, 8);
+  const relatedVehicles = await getRelatedVehicles(
+    { id: vehicle.id, brandId: vehicle.brandId, locationId: vehicle.locationId, categoryId: vehicle.categoryId },
+    8
+  );
 
   const isBooked = vehicle.bookingStatus === "booked";
   const phoneDigits = vehicle.contactPhone.replace(/\D/g, "");
