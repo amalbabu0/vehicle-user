@@ -2,13 +2,23 @@ import Image from "next/image";
 import Link from "next/link";
 import { Mail, Phone, MessageCircle, ShieldCheck, PhoneCall, ReceiptText } from "lucide-react";
 import { createPublicClient } from "@/lib/supabase/public-client";
+import { FacebookIcon, InstagramIcon, WhatsappIcon } from "@/components/icons/social-icons";
 
 type ContactInfo = { email?: string; phone?: string; whatsapp?: string };
+// Same site_settings row the admin app's Settings → Social tab writes
+// (lib/admin/settings-data.ts's SocialLinks) — read-only here.
+type SocialLinks = { facebook?: string; instagram?: string };
 
 async function getContactInfo(): Promise<ContactInfo> {
   const supabase = createPublicClient();
   const { data } = await supabase.from("site_settings").select("value").eq("key", "contact_info").maybeSingle();
   return (data?.value as ContactInfo) ?? {};
+}
+
+async function getSocialLinks(): Promise<SocialLinks> {
+  const supabase = createPublicClient();
+  const { data } = await supabase.from("site_settings").select("value").eq("key", "social_links").maybeSingle();
+  return (data?.value as SocialLinks) ?? {};
 }
 
 const FOOTER_LINKS = [
@@ -31,8 +41,16 @@ const TRUST_BADGES = [
 ];
 
 export async function Footer() {
-  const contact = await getContactInfo();
+  const [contact, social] = await Promise.all([getContactInfo(), getSocialLinks()]);
   const hasContact = Boolean(contact.email || contact.phone || contact.whatsapp);
+
+  const socialLinks = [
+    contact.whatsapp
+      ? { href: `https://wa.me/${contact.whatsapp.replace(/\D/g, "")}`, label: "WhatsApp", Icon: WhatsappIcon }
+      : null,
+    social.facebook ? { href: social.facebook, label: "Facebook", Icon: FacebookIcon } : null,
+    social.instagram ? { href: social.instagram, label: "Instagram", Icon: InstagramIcon } : null,
+  ].filter((link): link is { href: string; label: string; Icon: typeof WhatsappIcon } => link !== null);
 
   return (
     <footer className="mt-16 border-t border-border bg-muted/30">
@@ -70,6 +88,24 @@ export async function Footer() {
                 </li>
               ))}
             </ul>
+
+            {socialLinks.length > 0 ? (
+              <ul className="mt-5 flex items-center gap-3">
+                {socialLinks.map(({ href, label, Icon }) => (
+                  <li key={label}>
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={label}
+                      className="flex size-9 items-center justify-center rounded-full border border-border text-muted-foreground no-underline transition hover:border-primary/50 hover:text-primary"
+                    >
+                      <Icon className="size-4" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
 
           <div className={hasContact ? undefined : "col-span-2 sm:col-span-1"}>

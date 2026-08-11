@@ -2,7 +2,9 @@ import { Suspense } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Hero } from "@/components/hero";
+import { BrowseCategories } from "@/components/sections/browse-categories";
 import { LatestVehicles } from "@/components/sections/latest-vehicles";
+import { HowItWorks } from "@/components/sections/how-it-works";
 import { Testimonials } from "@/components/sections/testimonials";
 import { Faq } from "@/components/sections/faq";
 import { VehicleSectionSkeleton } from "@/components/sections/section-skeleton";
@@ -22,9 +24,15 @@ export default function HomePage() {
       <main>
         <Hero />
 
+        <Suspense fallback={null}>
+          <BrowseCategories />
+        </Suspense>
+
         <Suspense fallback={<VehicleSectionSkeleton />}>
           <LatestVehicles />
         </Suspense>
+
+        <HowItWorks />
 
         <Suspense fallback={null}>
           <Testimonials />
