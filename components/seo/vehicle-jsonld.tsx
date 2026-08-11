@@ -2,10 +2,12 @@ import { env } from "@/lib/env";
 import type { VehicleCardData } from "@/lib/types/vehicle-card";
 
 export function VehicleJsonLd({ vehicle }: { vehicle: VehicleCardData }) {
+  const district = vehicle.districtName ?? "Kerala";
   const data = {
     "@context": "https://schema.org",
     "@type": "Vehicle",
     name: vehicle.name,
+    description: `${vehicle.name} available for lease in ${district}, Kerala.`,
     brand: vehicle.brandName ?? undefined,
     model: vehicle.model ?? undefined,
     vehicleModelDate: vehicle.registrationYear ?? undefined,

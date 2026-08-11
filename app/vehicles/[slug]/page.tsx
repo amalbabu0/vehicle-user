@@ -83,12 +83,31 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const vehicle = await getVehicleBySlug(slug);
   if (!vehicle) return { title: "Vehicle not found" };
 
-  const title = `${vehicle.name} ${vehicle.registrationYear ?? ""} — ₹${vehicle.leaseAmount.toLocaleString("en-IN")}`.trim();
-  const description = `${vehicle.name} in ${vehicle.districtName ?? "Kerala"} — ${[vehicle.fuelType, vehicle.transmission, vehicle.kmDriven ? `${vehicle.kmDriven.toLocaleString("en-IN")} km` : null].filter(Boolean).join(", ")}. Contact the owner directly on Kerala Lease Hub.`;
+  const district = vehicle.districtName ?? "Kerala";
+  // Leads with "<vehicle> for Lease in <district>" — the phrase people
+  // actually search ("Maruti Suzuki S-Cross for lease in Kerala"), not
+  // just the bare model name + price. district (e.g. "Kollam"), not a
+  // hardcoded "Kerala", so every listing's title stays distinct instead of
+  // all reading the same repeated phrase — Kerala is still covered by the
+  // site name, Organization schema's areaServed, and this same phrase
+  // applies to whichever district a search happens to mention.
+  const title = `${vehicle.name}${vehicle.registrationYear ? ` ${vehicle.registrationYear}` : ""} for Lease in ${district} — ₹${vehicle.leaseAmount.toLocaleString("en-IN")}`;
+  const description = `Lease a ${vehicle.name}${vehicle.registrationYear ? ` (${vehicle.registrationYear})` : ""} in ${district} — ${[vehicle.fuelType, vehicle.transmission, vehicle.kmDriven ? `${vehicle.kmDriven.toLocaleString("en-IN")} km` : null].filter(Boolean).join(", ")}. ₹${vehicle.leaseAmount.toLocaleString("en-IN")}/${vehicle.leasePeriod}. Contact the owner directly on Kerala Lease Hub.`;
+  // Ignored by Google (deprecated there since ~2009) but still read by
+  // Bing and some other crawlers — cheap to include, matches what people
+  // actually type ("<model> for lease", "<model> lease Kerala").
+  const keywords = [
+    `${vehicle.name} for lease`,
+    `${vehicle.name} for lease in ${district}`,
+    `lease ${vehicle.name} Kerala`,
+    `${vehicle.name} rental Kerala`,
+    vehicle.brandName ? `${vehicle.brandName} for lease Kerala` : null,
+  ].filter((value): value is string => Boolean(value));
 
   return {
     title,
     description,
+    keywords,
     alternates: { canonical: `/vehicles/${vehicle.slug}` },
     openGraph: { title, description, images: vehicle.coverImageUrl ? [vehicle.coverImageUrl] : undefined, url: `${env.SITE_URL}/vehicles/${vehicle.slug}` },
     twitter: { card: "summary_large_image", title, description },
