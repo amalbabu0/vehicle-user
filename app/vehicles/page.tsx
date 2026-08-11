@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { searchVehicles, searchVehiclesByPage, parseFiltersFromSearchParams, getFilterableBrands, type VehicleFilters } from "@/lib/data/search";
+import { searchVehicles, parseFiltersFromSearchParams, getFilterableBrands, type VehicleFilters } from "@/lib/data/search";
 import { getDistricts } from "@/lib/data/locations";
 import { getCategoriesWithCounts } from "@/lib/data/home";
 import { Navbar } from "@/components/navbar";
@@ -15,10 +15,10 @@ const PAGE_SIZE = 20;
 
 type PageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-function buildQueryString(rawParams: Record<string, string | string[] | undefined>, omit: string[] = []) {
+function buildQueryString(rawParams: Record<string, string | string[] | undefined>) {
   return new URLSearchParams(
     Object.entries(rawParams).flatMap(([key, value]) =>
-      value == null || omit.includes(key) ? [] : Array.isArray(value) ? value.map((v) => [key, v] as [string, string]) : [[key, value] as [string, string]]
+      value == null ? [] : Array.isArray(value) ? value.map((v) => [key, v] as [string, string]) : [[key, value] as [string, string]]
     )
   );
 }
@@ -28,7 +28,7 @@ function buildQueryString(rawParams: Record<string, string | string[] | undefine
 // (?brand=honda&fuelType=petrol vs. ?fuelType=petrol&brand=honda) are the
 // same content and must self-canonicalize to the same URL, or Google sees
 // them as duplicate pages competing against each other.
-function buildCanonicalQueryString(filters: VehicleFilters, page: number) {
+function buildCanonicalQueryString(filters: VehicleFilters) {
   const qs = new URLSearchParams();
   if (filters.q) qs.set("q", filters.q);
   if (filters.brand) qs.set("brand", filters.brand);
@@ -42,36 +42,20 @@ function buildCanonicalQueryString(filters: VehicleFilters, page: number) {
   if (filters.ownerType) qs.set("ownerType", filters.ownerType);
   if (filters.condition) qs.set("condition", filters.condition);
   if (filters.sort) qs.set("sort", filters.sort);
-  if (page > 1) qs.set("page", String(page));
   return qs;
-}
-
-// Two distinct result shapes normalized to one, so the page component can
-// destructure either branch identically — see lib/data/search.ts for why
-// these are two separate underlying queries (cursor vs. offset) rather
-// than a single function.
-async function getPaginatedResults(filters: VehicleFilters, page: number) {
-  const result = await searchVehiclesByPage(filters, page, PAGE_SIZE);
-  return { vehicles: result.vehicles, total: result.total, totalPages: result.totalPages, nextCursor: null as string | null };
 }
 
 async function getInfiniteScrollResults(filters: VehicleFilters) {
   const result = await searchVehicles(filters, PAGE_SIZE, null);
-  return { vehicles: result.vehicles, total: result.total, totalPages: Math.max(1, Math.ceil(result.total / PAGE_SIZE)), nextCursor: result.nextCursor };
+  return { vehicles: result.vehicles, total: result.total, nextCursor: result.nextCursor };
 }
 
-// generateMetadata (not a static export) because the canonical needs to
-// reflect the current page number — each paginated page gets its own
-// self-referencing canonical rather than all pointing at page 1, which
-// would hide pages 2+ from the index entirely (a common pagination-SEO
-// mistake Google explicitly warns against).
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const rawParams = await searchParams;
-  const page = Math.max(1, Number(rawParams.page) || 1);
   const filters = parseFiltersFromSearchParams(rawParams);
-  const qs = buildCanonicalQueryString(filters, page);
+  const qs = buildCanonicalQueryString(filters);
   const canonical = qs.toString() ? `/vehicles?${qs.toString()}` : "/vehicles";
-  const title = page > 1 ? `Browse Vehicles — Page ${page}` : "Browse Vehicles";
+  const title = "Browse Vehicles";
   const description = "Browse cars, bikes, and every kind of vehicle available for lease across Kerala — filter by brand, price, fuel type, transmission, and district.";
 
   return {
@@ -85,24 +69,13 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 export default async function VehiclesSearchPage({ searchParams }: PageProps) {
   const rawParams = await searchParams;
   const filters = parseFiltersFromSearchParams(rawParams);
-  const requestedPage = Math.max(1, Number(rawParams.page) || 1);
 
   const [districts, categories, brands] = await Promise.all([getDistricts(), getCategoriesWithCounts(), getFilterableBrands()]);
 
-  const filtersQueryString = buildQueryString(rawParams, ["page"]).toString();
-  const activeFilterCount = Object.keys(rawParams).filter((key) => key !== "cursor" && key !== "page" && rawParams[key]).length;
+  const filtersQueryString = buildQueryString(rawParams).toString();
+  const activeFilterCount = Object.keys(rawParams).filter((key) => key !== "cursor" && rawParams[key]).length;
 
-  // Page 1 (the default, no ?page in the URL) keeps today's cursor-seeded
-  // infinite-scroll experience for human visitors. Any explicit ?page=N is
-  // a classic offset-paginated view instead — this is the crawlable path:
-  // a real, self-contained page of results with server-rendered Prev/Next
-  // links, reachable without executing any scroll/JS interaction. See
-  // lib/data/search.ts for why these are two separate query functions
-  // rather than one.
-  const isPaginatedView = requestedPage > 1;
-  const { vehicles, total, totalPages, nextCursor } = isPaginatedView
-    ? await getPaginatedResults(filters, requestedPage)
-    : await getInfiniteScrollResults(filters);
+  const { vehicles, total, nextCursor } = await getInfiniteScrollResults(filters);
 
   // Favorited state is resolved client-side (FavoritesProvider), not here —
   // this keeps the page itself free of cookies()-dependent calls so it can
@@ -110,7 +83,6 @@ export default async function VehiclesSearchPage({ searchParams }: PageProps) {
   // `false`: VehicleCard/FavoriteButton treat an explicit `false` as a known
   // answer (skipping the context lookup), which would be wrong here.
   const vehiclesWithFavorite = vehicles.map((vehicle) => ({ ...vehicle, favorited: undefined as boolean | undefined }));
-  const baseSearchParams = buildQueryString(rawParams, ["page", "cursor"]);
 
   return (
     <>
@@ -134,16 +106,7 @@ export default async function VehiclesSearchPage({ searchParams }: PageProps) {
           </aside>
 
           <div>
-            <VehicleResults
-              isPaginatedView={isPaginatedView}
-              vehicles={vehiclesWithFavorite}
-              initialVehicles={vehiclesWithFavorite}
-              initialCursor={nextCursor}
-              filtersQueryString={filtersQueryString}
-              page={requestedPage}
-              totalPages={totalPages}
-              baseSearchParamsString={baseSearchParams.toString()}
-            />
+            <VehicleResults initialVehicles={vehiclesWithFavorite} initialCursor={nextCursor} filtersQueryString={filtersQueryString} />
           </div>
         </div>
       </main>

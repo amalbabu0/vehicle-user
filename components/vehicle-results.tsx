@@ -2,9 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { LayoutGrid, Columns3, List as ListIcon } from "lucide-react";
-import { VehicleCard } from "@/components/vehicle-card";
 import { InfiniteVehicleGrid } from "@/components/infinite-vehicle-grid";
-import { VehiclePagination } from "@/components/vehicle-pagination";
 import { cn } from "@/lib/utils";
 import type { VehicleCardData } from "@/lib/types/vehicle-card";
 
@@ -51,29 +49,14 @@ function setStoredView(next: ViewMode) {
   listeners.forEach((listener) => listener());
 }
 
-const GRID_CLASS: Record<"grid" | "column", string> = {
-  grid: "grid grid-cols-2 gap-3 sm:gap-4",
-  column: "grid grid-cols-1 gap-3 sm:gap-5",
-};
-
 export function VehicleResults({
-  isPaginatedView,
-  vehicles,
   initialVehicles,
   initialCursor,
   filtersQueryString,
-  page,
-  totalPages,
-  baseSearchParamsString,
 }: {
-  isPaginatedView: boolean;
-  vehicles: VehicleWithFavorite[];
   initialVehicles: VehicleWithFavorite[];
   initialCursor: string | null;
   filtersQueryString: string;
-  page: number;
-  totalPages: number;
-  baseSearchParamsString: string;
 }) {
   const view = useSyncExternalStore(subscribeToView, getViewSnapshot, getViewServerSnapshot);
   const changeView = (next: ViewMode) => setStoredView(next);
@@ -100,37 +83,13 @@ export function VehicleResults({
         </div>
       </div>
 
-      {isPaginatedView ? (
-        vehicles.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted-foreground">No vehicles on this page.</p>
-        ) : view === "list" ? (
-          <div className="flex flex-col gap-3">
-            {vehicles.map((vehicle) => (
-              <VehicleCard key={vehicle.id} vehicle={vehicle} view="list" />
-            ))}
-          </div>
-        ) : (
-          <div className={GRID_CLASS[view]}>
-            {vehicles.map((vehicle) => (
-              <VehicleCard key={vehicle.id} vehicle={vehicle} />
-            ))}
-          </div>
-        )
-      ) : (
-        <InfiniteVehicleGrid
-          key={filtersQueryString}
-          initialVehicles={initialVehicles}
-          initialCursor={initialCursor}
-          filtersQueryString={filtersQueryString}
-          view={view}
-        />
-      )}
-
-      {/* Always rendered, including on page 1 — this is what lets a crawler
-          discover /vehicles?page=2 from a plain link on the very first
-          page, without needing to execute infinite-scroll JS at all.
-          VehiclePagination itself renders nothing when totalPages <= 1. */}
-      <VehiclePagination page={page} totalPages={totalPages} baseSearchParams={new URLSearchParams(baseSearchParamsString)} />
+      <InfiniteVehicleGrid
+        key={filtersQueryString}
+        initialVehicles={initialVehicles}
+        initialCursor={initialCursor}
+        filtersQueryString={filtersQueryString}
+        view={view}
+      />
     </div>
   );
 }

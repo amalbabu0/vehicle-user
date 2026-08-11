@@ -148,36 +148,6 @@ export async function searchVehicles(
   return { vehicles, nextCursor, total: count ?? 0 };
 }
 
-/** Offset-based (page-number) retrieval — deliberately separate from the
- * cursor/keyset function above, not a variant of it. Cursor pagination has
- * no way to jump to an arbitrary page without walking every cursor before
- * it, which is exactly what a crawler following a `?page=N` link needs to
- * do. The default browsing experience (infinite scroll) keeps using
- * searchVehicles/cursor above unchanged; this path only activates when a
- * `page` query param is present in the URL — see app/vehicles/page.tsx. */
-export async function searchVehiclesByPage(
-  filters: VehicleFilters,
-  page: number,
-  pageSize: number
-): Promise<{ vehicles: VehicleCardData[]; total: number; totalPages: number }> {
-  const supabase = createPublicClient();
-  let { query } = await applyFilters(supabase.from("vehicles").select(VEHICLE_CARD_SELECT, { count: "exact" }).eq("status", "published"), filters, supabase);
-
-  const sortOption = filters.sort ?? "latest";
-  const { column, ascending } = SORT_CONFIG[sortOption];
-  query = query.order(column, { ascending }).order("id", { ascending });
-
-  const from = (page - 1) * pageSize;
-  query = query.range(from, from + pageSize - 1);
-
-  const [{ data, count }, locations] = await Promise.all([query, getLocationLookup()]);
-  const rows = (data ?? []) as unknown as Parameters<typeof mapVehicleRowToCard>[0][];
-  const vehicles = rows.map((row) => mapVehicleRowToCard(row, locations));
-  const total = count ?? 0;
-
-  return { vehicles, total, totalPages: Math.max(1, Math.ceil(total / pageSize)) };
-}
-
 export type FilterableBrand = { id: string; name: string; slug: string };
 
 /** Every brand with at least one published listing — used to populate the
