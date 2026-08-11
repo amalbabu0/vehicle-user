@@ -24,7 +24,7 @@ export function buildPageOg({
       title: fullTitle,
       description,
       url: `${env.SITE_URL}${path}`,
-      images: [{ url: "/branding/logo-footer.webp", width: 480, height: 135, alt: SITE_NAME }],
+      images: [{ url: "/branding/logo-footer.webp", width: 676, height: 369, alt: SITE_NAME }],
     },
     twitter: {
       card: "summary_large_image",

@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     // Default share-preview image for any page that doesn't set its own
     // (vehicle detail pages already override this with the listing's cover
     // photo — see app/vehicles/[slug]/page.tsx's generateMetadata).
-    images: [{ url: "/branding/logo-footer.webp", width: 480, height: 135, alt: SITE_NAME }],
+    images: [{ url: "/branding/logo-footer.webp", width: 676, height: 369, alt: SITE_NAME }],
   },
   twitter: {
     card: "summary_large_image",

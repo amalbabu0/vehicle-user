@@ -88,7 +88,7 @@ export function NavbarClient() {
   return (
     <header className="glass-surface sticky top-0 z-40 border-b border-transparent px-4 py-3 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-        <Link href="/" className="relative h-8 w-32 shrink-0 sm:h-9 sm:w-36" aria-label="Kerala Lease Hub — home">
+        <Link href="/" className="relative h-10 w-20 shrink-0 sm:h-11 sm:w-24" aria-label="Kerala Lease Hub — home">
           <Image src="/branding/logo-footer.webp" alt="Kerala Lease Hub" fill className="object-contain object-left dark:hidden" priority />
           <Image src="/branding/logo-footer-dark.avif" alt="Kerala Lease Hub" fill className="hidden object-contain object-left dark:block" priority />
         </Link>
