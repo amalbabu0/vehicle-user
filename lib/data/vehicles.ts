@@ -6,7 +6,7 @@ import type { VehicleCardData } from "@/lib/types/vehicle-card";
 // only (RLS also enforces this, this just avoids over-fetching columns).
 export const VEHICLE_CARD_SELECT = `
   id, slug, name, model, registration_year, fuel_type, transmission, km_driven,
-  lease_amount, lease_period, view_count, published_at, approved_by, location_id,
+  lease_amount, lease_period, view_count, published_at, approved_by, location_id, booking_status,
   brands ( name ),
   vehicle_images ( url, thumbnail_url, is_cover, sort_order )
 `;
@@ -26,6 +26,7 @@ type VehicleCardRow = {
   published_at: string | null;
   approved_by: string | null;
   location_id: string | null;
+  booking_status: "available" | "booked";
   brands: { name: string } | null;
   vehicle_images: { url: string; thumbnail_url: string | null; is_cover: boolean; sort_order: number }[];
 };
@@ -55,6 +56,7 @@ export function mapVehicleRowToCard(row: VehicleCardRow, locations: LocationLook
     viewCount: row.view_count,
     publishedAt: row.published_at,
     verified: row.approved_by !== null,
+    bookingStatus: row.booking_status,
   };
 }
 
@@ -118,7 +120,7 @@ export function formatOwnership(count: number | null): string | null {
 
 const VEHICLE_DETAIL_SELECT = `
   id, slug, name, model, registration_year, fuel_type, transmission, km_driven,
-  lease_amount, lease_period, view_count, published_at, approved_by, location_id, brand_id,
+  lease_amount, lease_period, view_count, published_at, approved_by, location_id, brand_id, booking_status,
   description, contact_phone, direct_owner, condition, engine_capacity, seats, color,
   features, service_charge_percent, ownership_count,
   brands ( name ),

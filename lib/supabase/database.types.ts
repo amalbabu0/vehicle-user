@@ -485,6 +485,7 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          booking_status: Database["public"]["Enums"]["vehicle_booking_status"]
           brand_id: string | null
           category_id: string | null
           color: string | null
@@ -525,6 +526,7 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          booking_status?: Database["public"]["Enums"]["vehicle_booking_status"]
           brand_id?: string | null
           category_id?: string | null
           color?: string | null
@@ -565,6 +567,7 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          booking_status?: Database["public"]["Enums"]["vehicle_booking_status"]
           brand_id?: string | null
           category_id?: string | null
           color?: string | null
@@ -773,6 +776,7 @@ export type Database = {
         | "already_sold"
         | "incorrect_information"
       report_status: "open" | "reviewing" | "resolved" | "dismissed"
+      vehicle_booking_status: "available" | "booked"
       vehicle_status:
         | "draft"
         | "pending_approval"
@@ -931,6 +935,7 @@ export const Constants = {
         "incorrect_information",
       ],
       report_status: ["open", "reviewing", "resolved", "dismissed"],
+      vehicle_booking_status: ["available", "booked"],
       vehicle_status: [
         "draft",
         "pending_approval",

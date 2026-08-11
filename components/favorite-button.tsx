@@ -11,6 +11,8 @@ export function FavoriteButton({
   initialFavorited,
   className,
   label,
+  disabled = false,
+  disabledReason = "This vehicle is already booked and can't be favorited right now.",
 }: {
   vehicleId: string;
   /** Only pass this when the page already knows the answer for certain
@@ -20,6 +22,12 @@ export function FavoriteButton({
   initialFavorited?: boolean;
   className?: string;
   label?: string;
+  /** True for a booked vehicle. Blocks the action in the click handler
+   * itself (not just the native `disabled` attribute) — a disabled-looking
+   * button whose onClick still runs isn't actually disabled, and the
+   * server (POST /api/favorites) rejects it too either way. */
+  disabled?: boolean;
+  disabledReason?: string;
 }) {
   const router = useRouter();
   const { isFavorited, setFavorited: setContextFavorited } = useFavorites();
@@ -34,6 +42,7 @@ export function FavoriteButton({
   const toggle = (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
+    if (disabled) return;
     startTransition(async () => {
       const response = await fetch("/api/favorites", {
         method: "POST",
@@ -55,18 +64,20 @@ export function FavoriteButton({
     <button
       type="button"
       onClick={toggle}
-      disabled={isPending}
+      disabled={disabled || isPending}
+      aria-disabled={disabled}
       aria-pressed={favorited}
-      aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+      aria-label={disabled ? disabledReason : favorited ? "Remove from favorites" : "Add to favorites"}
+      title={disabled ? disabledReason : undefined}
       className={cn(
         label
-          ? "glass-surface flex items-center justify-center gap-2 rounded-(--glass-radius) px-4 py-2.5 text-sm font-medium text-foreground transition hover:opacity-90 disabled:opacity-60"
-          : "glass-surface flex size-9 items-center justify-center rounded-full text-foreground transition hover:scale-105 disabled:opacity-60",
+          ? "glass-surface flex items-center justify-center gap-2 rounded-(--glass-radius) px-4 py-2.5 text-sm font-medium text-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          : "glass-surface flex size-9 items-center justify-center rounded-full text-foreground transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60",
         className
       )}
     >
       <Heart className={cn("size-4", favorited && "fill-red-500 text-red-500")} />
-      {label ? <span>{favorited ? "Saved to favorites" : label}</span> : null}
+      {label ? <span>{disabled ? "Unavailable" : favorited ? "Saved to favorites" : label}</span> : null}
     </button>
   );
 }

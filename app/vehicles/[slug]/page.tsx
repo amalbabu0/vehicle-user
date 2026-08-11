@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { BadgeCheck, MapPin, Phone } from "lucide-react";
 import { getVehicleBySlug, getRelatedVehicles, incrementViewCount, formatOwnership } from "@/lib/data/vehicles";
@@ -12,6 +13,55 @@ import { BreadcrumbJsonLd } from "@/components/seo/breadcrumb-jsonld";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { env } from "@/lib/env";
+import { cn } from "@/lib/utils";
+
+const BOOKED_TITLE = "This vehicle is already booked.";
+
+/** Call/WhatsApp, in either their live (<a>) or genuinely-blocked (<button
+ * disabled>) form — booked renders no href/onClick at all, not just a
+ * disabled-looking link, so there's nothing for a click to fall through to. */
+function ContactAction({
+  href,
+  icon,
+  label,
+  disabled,
+  tone,
+  external = false,
+}: {
+  href: string;
+  icon?: ReactNode;
+  label: string;
+  disabled: boolean;
+  tone: "primary" | "whatsapp";
+  external?: boolean;
+}) {
+  const className = cn(
+    "flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition",
+    tone === "primary" ? "bg-primary text-primary-foreground hover:opacity-90" : "border border-emerald-600 text-emerald-600 hover:bg-emerald-600/10",
+    disabled && "pointer-events-none cursor-not-allowed opacity-50"
+  );
+
+  if (disabled) {
+    return (
+      <button type="button" disabled aria-disabled="true" title={BOOKED_TITLE} className={className}>
+        {icon}
+        {label}
+      </button>
+    );
+  }
+
+  return (
+    <a
+      href={href}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noopener noreferrer" : undefined}
+      className={cn(className, "no-underline")}
+    >
+      {icon}
+      {label}
+    </a>
+  );
+}
 
 export const revalidate = 120;
 
@@ -57,6 +107,7 @@ export default async function VehicleDetailPage({ params }: PageProps) {
 
   const relatedVehicles = await getRelatedVehicles({ id: vehicle.id, brandId: vehicle.brandId, locationId: vehicle.locationId }, 8);
 
+  const isBooked = vehicle.bookingStatus === "booked";
   const phoneDigits = vehicle.contactPhone.replace(/\D/g, "");
   const whatsappNumber = phoneDigits.length === 10 ? `91${phoneDigits}` : phoneDigits;
 
@@ -85,7 +136,7 @@ export default async function VehicleDetailPage({ params }: PageProps) {
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <div className="grid gap-6 lg:gap-8 lg:grid-cols-[1.6fr_1fr]">
           <div className="space-y-6">
-            <VehicleGallery images={vehicle.images} name={vehicle.name} vehicleId={vehicle.id} slug={vehicle.slug} />
+            <VehicleGallery images={vehicle.images} name={vehicle.name} vehicleId={vehicle.id} slug={vehicle.slug} isBooked={isBooked} />
 
             {/* Mobile/tablet: contact CTAs surface right under the gallery
                 instead of being buried below the full spec sheet. */}
@@ -102,24 +153,13 @@ export default async function VehicleDetailPage({ params }: PageProps) {
                 ) : null}
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <a
-                  href={`tel:${phoneDigits}`}
-                  className="flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground no-underline transition hover:opacity-90"
-                >
-                  <Phone className="size-4" /> Call
-                </a>
-                <a
-                  href={whatsappHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 rounded-full border border-emerald-600 px-4 py-2.5 text-sm font-medium text-emerald-600 no-underline transition hover:bg-emerald-600/10"
-                >
-                  WhatsApp
-                </a>
+                <ContactAction href={`tel:${phoneDigits}`} icon={<Phone className="size-4" />} label="Call" disabled={isBooked} tone="primary" />
+                <ContactAction href={whatsappHref} label="WhatsApp" disabled={isBooked} tone="whatsapp" external />
               </div>
               <FavoriteButton
                 vehicleId={vehicle.id}
                 label="Save to favorites"
+                disabled={isBooked}
                 className="w-full rounded-full"
               />
             </div>
@@ -130,6 +170,9 @@ export default async function VehicleDetailPage({ params }: PageProps) {
                 <span className="inline-flex items-center gap-1">
                   <MapPin className="size-4" /> {vehicle.districtName ?? "Kerala"}
                 </span>
+                {isBooked ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-medium text-white">Already Booked</span>
+                ) : null}
                 {vehicle.verified ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-0.5 text-xs font-medium text-white">
                     <BadgeCheck className="size-3.5" /> Verified
@@ -198,23 +241,12 @@ export default async function VehicleDetailPage({ params }: PageProps) {
               </p>
 
               <div className="mt-6 space-y-2">
-                <a
-                  href={`tel:${phoneDigits}`}
-                  className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground no-underline transition hover:opacity-90"
-                >
-                  <Phone className="size-4" /> Call owner
-                </a>
-                <a
-                  href={whatsappHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex w-full items-center justify-center gap-2 rounded-full border border-emerald-600 px-4 py-2.5 text-sm font-medium text-emerald-600 no-underline transition hover:bg-emerald-600/10"
-                >
-                  WhatsApp owner
-                </a>
+                <ContactAction href={`tel:${phoneDigits}`} icon={<Phone className="size-4" />} label="Call owner" disabled={isBooked} tone="primary" />
+                <ContactAction href={whatsappHref} label="WhatsApp owner" disabled={isBooked} tone="whatsapp" external />
                 <FavoriteButton
                   vehicleId={vehicle.id}
                   label="Save to favorites"
+                  disabled={isBooked}
                   className="w-full rounded-full"
                 />
               </div>

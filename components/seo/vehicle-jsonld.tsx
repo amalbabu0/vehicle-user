@@ -30,7 +30,9 @@ export function VehicleJsonLd({ vehicle }: { vehicle: VehicleCardData }) {
         priceCurrency: "INR",
         unitText: vehicle.leasePeriod,
       },
-      availability: "https://schema.org/InStock",
+      // Reflects the lister's booking toggle so structured data doesn't
+      // keep telling Google a booked vehicle is available.
+      availability: vehicle.bookingStatus === "booked" ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
       url: `${env.SITE_URL}/vehicles/${vehicle.slug}`,
     },
   };

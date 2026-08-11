@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { BadgeCheck, Car } from "lucide-react";
 import { FavoriteButton } from "@/components/favorite-button";
 import { ShareButton } from "@/components/share-button";
+import { cn } from "@/lib/utils";
 import type { VehicleCardData } from "@/lib/types/vehicle-card";
 
 // Cards sit on top of a photo, so the icon buttons need a background that
@@ -11,6 +12,28 @@ import type { VehicleCardData } from "@/lib/types/vehicle-card";
 // (which picks up whatever colors are behind it and can wash out against a
 // busy photo) — a flat dark tint stays legible over every listing photo.
 const OVERLAY_ICON_CLASS = "border border-white/15 bg-black/40 text-white backdrop-blur-md hover:bg-black/60";
+
+const FAVORITE_DISABLED_REASON = "This vehicle is already booked and can't be favorited right now.";
+
+/** Grayscale photo + a scrim with visible "Already Booked" text (not just a
+ * color change, which alone wouldn't reach screen readers or colorblind
+ * users) — sits under the badges/icon buttons in z-order so those stay
+ * legible and usable (Share in particular stays fully active on a booked
+ * card; only Favorite is blocked). */
+function BookedOverlay({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className="absolute inset-0 z-[5] flex items-center justify-center bg-black/50">
+      <span
+        className={cn(
+          "rounded-full bg-black/70 font-bold tracking-wide text-white uppercase",
+          compact ? "px-2 py-0.5 text-[9px]" : "px-3 py-1.5 text-xs"
+        )}
+      >
+        Already Booked
+      </span>
+    </div>
+  );
+}
 
 export function VehicleCard({
   vehicle,
@@ -27,6 +50,7 @@ export function VehicleCard({
    * photo-first card used everywhere else. */
   view?: "grid" | "list";
 }) {
+  const isBooked = vehicle.bookingStatus === "booked";
   const cardImageUrl = vehicle.coverThumbnailUrl ?? vehicle.coverImageUrl;
   // Descriptive rather than generic — e.g. "2022 Hyundai Creta SX Diesel in
   // Kozhikode" — composed only from fields this card actually has.
@@ -54,19 +78,32 @@ export function VehicleCard({
     return (
       <div className="glass-surface glass-specular group relative flex gap-3 overflow-hidden rounded-(--glass-radius-lg) p-2 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl sm:p-3">
         <div className="absolute right-4 top-4 z-10 flex flex-col gap-1.5 sm:right-5">
-          <FavoriteButton vehicleId={vehicle.id} initialFavorited={favorited} className={`${OVERLAY_ICON_CLASS} size-7`} />
+          <FavoriteButton
+            vehicleId={vehicle.id}
+            initialFavorited={favorited}
+            disabled={isBooked}
+            disabledReason={FAVORITE_DISABLED_REASON}
+            className={`${OVERLAY_ICON_CLASS} size-7`}
+          />
           <ShareButton slug={vehicle.slug} name={vehicle.name} className={`${OVERLAY_ICON_CLASS} size-7`} />
         </div>
 
         <Link href={`/vehicles/${vehicle.slug}`} className="flex min-w-0 flex-1 gap-3 text-foreground no-underline">
           <div className="relative size-24 shrink-0 overflow-hidden rounded-(--glass-radius) bg-muted sm:size-32">
             {cardImageUrl ? (
-              <Image src={cardImageUrl} alt={altText} fill sizes="128px" className="object-cover transition duration-300 group-hover:scale-105" />
+              <Image
+                src={cardImageUrl}
+                alt={altText}
+                fill
+                sizes="128px"
+                className={cn("object-cover transition duration-300 group-hover:scale-105", isBooked && "grayscale")}
+              />
             ) : (
               <div className="flex h-full items-center justify-center text-muted-foreground">
                 <Car className="size-8" />
               </div>
             )}
+            {isBooked ? <BookedOverlay compact /> : null}
             {vehicle.verified && (
               <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded-full bg-emerald-600 px-1.5 py-0.5 text-[10px] font-medium text-white">
                 <BadgeCheck className="size-3" />
@@ -91,7 +128,13 @@ export function VehicleCard({
   return (
     <div className="glass-surface glass-specular group relative overflow-hidden rounded-(--glass-radius-lg) transition duration-300 hover:-translate-y-1 hover:shadow-xl">
       <div className="absolute right-3 top-3 z-10 flex flex-col gap-2">
-        <FavoriteButton vehicleId={vehicle.id} initialFavorited={favorited} className={OVERLAY_ICON_CLASS} />
+        <FavoriteButton
+          vehicleId={vehicle.id}
+          initialFavorited={favorited}
+          disabled={isBooked}
+          disabledReason={FAVORITE_DISABLED_REASON}
+          className={OVERLAY_ICON_CLASS}
+        />
         <ShareButton slug={vehicle.slug} name={vehicle.name} className={OVERLAY_ICON_CLASS} />
       </div>
 
@@ -103,13 +146,14 @@ export function VehicleCard({
               alt={altText}
               fill
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 50vw, 25vw"
-              className="object-cover transition duration-300 group-hover:scale-105"
+              className={cn("object-cover transition duration-300 group-hover:scale-105", isBooked && "grayscale")}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-muted-foreground">
               <Car className="size-10" />
             </div>
           )}
+          {isBooked ? <BookedOverlay /> : null}
           {vehicle.verified && (
             <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white">
               <BadgeCheck className="size-3.5" /> Verified

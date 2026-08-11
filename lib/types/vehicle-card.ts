@@ -17,4 +17,5 @@ export type VehicleCardData = {
   viewCount: number;
   publishedAt: string | null;
   verified: boolean;
+  bookingStatus: "available" | "booked";
 };

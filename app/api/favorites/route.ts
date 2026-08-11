@@ -22,6 +22,17 @@ export async function POST(request: Request) {
   }
 
   const { vehicleId } = validation.data;
+
+  // The UI never lets a booked vehicle's Favorite button be clicked (see
+  // components/favorite-button.tsx's `disabled` prop), so this only ever
+  // fires for a direct API call bypassing the UI — reject it the same way
+  // regardless of direction (add or remove), matching the button being
+  // fully inert while booked rather than half-functional.
+  const { data: vehicle } = await supabase.from("vehicles").select("booking_status").eq("id", vehicleId).maybeSingle();
+  if (vehicle?.booking_status === "booked") {
+    return NextResponse.json({ message: "This vehicle is already booked and can't be favorited right now." }, { status: 409 });
+  }
+
   const { data: existing } = await supabase
     .from("favorites")
     .select("id")

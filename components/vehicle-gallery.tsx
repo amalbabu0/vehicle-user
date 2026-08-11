@@ -14,12 +14,15 @@ export type GalleryImage = { url: string; mediumUrl: string | null; thumbnailUrl
 // the site's translucent glass-surface which picks up the photo behind it.
 const OVERLAY_ICON_CLASS = "border border-white/15 bg-black/40 text-white backdrop-blur-md hover:bg-black/60";
 
+const FAVORITE_DISABLED_REASON = "This vehicle is already booked and can't be favorited right now.";
+
 export function VehicleGallery({
   images,
   name,
   vehicleId,
   slug,
   favorited,
+  isBooked = false,
 }: {
   images: GalleryImage[];
   name: string;
@@ -28,6 +31,7 @@ export function VehicleGallery({
   /** Only pass this when known for certain server-side. Otherwise omit it
    * and FavoriteButton resolves it from client-side context. */
   favorited?: boolean;
+  isBooked?: boolean;
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -50,14 +54,26 @@ export function VehicleGallery({
           fill
           priority
           sizes="(max-width: 1024px) 100vw, 60vw"
-          className="object-cover"
+          className={cn("object-cover", isBooked && "grayscale")}
         />
-        <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-600/30 bg-background/80 px-3 py-1 backdrop-blur-md">
-          <span className="size-1.5 rounded-full bg-emerald-500" />
-          <span className="text-xs font-semibold">Available for lease</span>
-        </div>
+        {isBooked ? (
+          <div className="absolute inset-0 z-[5] flex items-center justify-center bg-black/50">
+            <span className="rounded-full bg-black/70 px-4 py-2 text-sm font-bold tracking-wide text-white uppercase">Already Booked</span>
+          </div>
+        ) : (
+          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-600/30 bg-background/80 px-3 py-1 backdrop-blur-md">
+            <span className="size-1.5 rounded-full bg-emerald-500" />
+            <span className="text-xs font-semibold">Available for lease</span>
+          </div>
+        )}
         <div className="absolute right-3 top-3 z-10 flex flex-col gap-2">
-          <FavoriteButton vehicleId={vehicleId} initialFavorited={favorited} className={OVERLAY_ICON_CLASS} />
+          <FavoriteButton
+            vehicleId={vehicleId}
+            initialFavorited={favorited}
+            disabled={isBooked}
+            disabledReason={FAVORITE_DISABLED_REASON}
+            className={OVERLAY_ICON_CLASS}
+          />
           <ShareButton slug={slug} name={name} className={OVERLAY_ICON_CLASS} />
         </div>
         {images.length > 1 ? (
@@ -83,7 +99,7 @@ export function VehicleGallery({
                 index === activeIndex ? "border-primary" : "border-transparent opacity-70 hover:opacity-100"
               )}
             >
-              <Image src={image.thumbnailUrl ?? image.url} alt="" fill sizes="64px" className="object-cover" />
+              <Image src={image.thumbnailUrl ?? image.url} alt="" fill sizes="64px" className={cn("object-cover", isBooked && "grayscale")} />
             </button>
           ))}
         </div>
