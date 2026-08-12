@@ -5,6 +5,7 @@ import { Geist } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { cn } from "@/lib/utils";
 import { AppProviders } from "@/components/providers/app-providers";
+import { SplashScreen } from "@/components/splash-screen";
 import { SiteJsonLd } from "@/components/seo/site-jsonld";
 import { env } from "@/lib/env";
 
@@ -83,6 +84,7 @@ gtag('config', '${GA_MEASUREMENT_ID}');`,
         />
       </head>
       <body>
+        <SplashScreen />
         <AppProviders>{children}</AppProviders>
         <Analytics />
       </body>
