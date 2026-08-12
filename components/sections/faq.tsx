@@ -31,12 +31,24 @@ export const FAQS = [
     answer: "Every listing shows Call and WhatsApp buttons that connect you directly with the owner — no middleman.",
   },
   {
-    question: "Is registering on Kerala Lease Hub free?",
-    answer: "Yes — creating an account with email/password or Google is free.",
+    question: "What documents do I need to lease a vehicle?",
+    answer:
+      "Requirements are set by the owner and confirmed directly with them — typically a valid driving license and ID proof. Ask the owner on the call or WhatsApp chat before finalizing.",
   },
   {
-    question: "Do I need a Google account to sign in?",
-    answer: "No — you can sign in with either email/password or your Google account.",
+    question: "Can I lease a vehicle for a short period, like a few months?",
+    answer:
+      "Yes. Owners set their own lease period on each listing — anywhere from a few months to longer terms — so check the listing details or ask the owner directly for flexibility.",
+  },
+  {
+    question: "Can I negotiate the lease amount with the owner?",
+    answer:
+      "Yes — the lease amount shown is set by the owner, and since you deal with them directly, you're free to discuss and negotiate terms before agreeing.",
+  },
+  {
+    question: "How do I know a listing is genuine and not already leased?",
+    answer:
+      "Every listing is reviewed before it goes live, and verified owners carry a Verified badge. If a vehicle has already been leased, it's clearly marked \"Already Booked\" on its listing so you don't waste time contacting it.",
   },
 ];
 
