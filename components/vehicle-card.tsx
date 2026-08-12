@@ -10,7 +10,22 @@ import type { VehicleCardData } from "@/lib/types/vehicle-card";
 // reads on any image rather than the site's translucent glass-surface
 // (which picks up whatever colors are behind it and can wash out against a
 // busy photo) — a flat dark tint stays legible over every listing photo.
-const OVERLAY_ICON_CLASS = "border border-white/15 bg-black/40 text-white backdrop-blur-md hover:bg-black/60";
+// No backdrop-blur here: bg-black/40 alone already reads fine over a photo,
+// and this class gets stamped onto two buttons on every card in the grid —
+// with dozens of cards on screen (and more arriving via infinite scroll),
+// that many live backdrop-filter layers is a real scroll-jank cost for a
+// blur that isn't buying much on top of the opaque-ish background.
+const OVERLAY_ICON_CLASS = "border border-white/15 bg-black/40 text-white hover:bg-black/60";
+
+// Cards mount and unmount off-screen constantly on the infinite-scroll
+// grids (/vehicles, homepage sections) — content-visibility skips layout
+// and paint for cards outside the viewport instead of paying for all of
+// them up front. containIntrinsicSize is just a placeholder box so the
+// scrollbar doesn't jump before a card's real size is known.
+const offscreenSkip = (heightPx: number): React.CSSProperties => ({
+  contentVisibility: "auto",
+  containIntrinsicSize: `auto ${heightPx}px`,
+});
 
 const FAVORITE_DISABLED_REASON = "This vehicle is already booked and can't be favorited right now.";
 
@@ -133,7 +148,10 @@ export function VehicleCard({
 
   if (view === "list") {
     return (
-      <div className="glass-surface glass-specular group relative flex gap-3 overflow-hidden rounded-(--glass-radius-lg) p-2 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl sm:p-3">
+      <div
+        className="glass-surface glass-specular group relative flex gap-3 overflow-hidden rounded-(--glass-radius-lg) p-2 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl sm:p-3"
+        style={offscreenSkip(144)}
+      >
         <div className="absolute right-4 top-4 z-10 flex flex-col gap-1.5 sm:right-5">
           <FavoriteButton
             vehicleId={vehicle.id}
@@ -183,7 +201,10 @@ export function VehicleCard({
   }
 
   return (
-    <div className="glass-surface glass-specular group relative overflow-hidden rounded-(--glass-radius-lg) transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+    <div
+      className="glass-surface glass-specular group relative overflow-hidden rounded-(--glass-radius-lg) transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+      style={offscreenSkip(280)}
+    >
       <div className="absolute right-3 top-3 z-10 flex flex-col gap-2">
         <FavoriteButton
           vehicleId={vehicle.id}
@@ -216,7 +237,7 @@ export function VehicleCard({
               <BadgeCheck className="size-3.5" /> Verified
             </span>
           )}
-          <span className="absolute bottom-2 left-2 rounded bg-background/80 px-2 py-1 text-xs font-semibold backdrop-blur-sm">
+          <span className="absolute bottom-2 left-2 rounded bg-background/80 px-2 py-1 text-xs font-semibold">
             ₹{vehicle.leaseAmount.toLocaleString("en-IN")}
             <span className="font-normal text-muted-foreground"> /{vehicle.leasePeriod}</span>
           </span>

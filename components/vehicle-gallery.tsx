@@ -12,7 +12,9 @@ export type GalleryImage = { url: string; mediumUrl: string | null; thumbnailUrl
 // Matches the tint used on VehicleCard's overlay icons — see that file for
 // why: a flat dark backing stays legible over any listing photo, unlike
 // the site's translucent glass-surface which picks up the photo behind it.
-const OVERLAY_ICON_CLASS = "border border-white/15 bg-black/40 text-white backdrop-blur-md hover:bg-black/60";
+// No backdrop-blur, also matching VehicleCard — bg-black/40 alone is
+// legible and skips an extra compositing layer.
+const OVERLAY_ICON_CLASS = "border border-white/15 bg-black/40 text-white hover:bg-black/60";
 
 const FAVORITE_DISABLED_REASON = "This vehicle is already booked and can't be favorited right now.";
 
