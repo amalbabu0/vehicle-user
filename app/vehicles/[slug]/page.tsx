@@ -156,7 +156,7 @@ export default async function VehicleDetailPage({ params }: PageProps) {
       <VehicleJsonLd vehicle={vehicle} />
       <Navbar />
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <div className="grid gap-6 lg:gap-8 lg:grid-cols-[1.6fr_1fr]">
+        <div className="grid grid-cols-1 gap-6 lg:gap-8 lg:grid-cols-[1.6fr_1fr]">
           <div className="space-y-6">
             <VehicleGallery images={vehicle.images} name={vehicle.name} vehicleId={vehicle.id} slug={vehicle.slug} isBooked={isBooked} />
 
