@@ -55,7 +55,7 @@ export function HeroSearchForm({ districts, categories }: { districts: DistrictO
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by brand or model — e.g. Swift, Activa"
+            placeholder="Search by model or brand"
             className="h-12 pl-10 text-base"
             aria-label="Search vehicles"
           />
