@@ -68,7 +68,7 @@ export function InfiniteVehicleGrid({
   if (vehicles.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 rounded-(--glass-radius-lg) border border-dashed border-border py-20 text-center">
-        <Car className="size-10 text-muted-foreground" />
+        <Car className="size-14 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">No vehicles match your filters. Try widening your search.</p>
       </div>
     );
@@ -85,7 +85,15 @@ export function InfiniteVehicleGrid({
     <div>
       <div className={layoutClass}>
         {vehicles.map((vehicle) => (
-          <VehicleCard key={vehicle.id} vehicle={vehicle} favorited={vehicle.favorited} view={isList ? "list" : "grid"} />
+          <VehicleCard
+            key={vehicle.id}
+            vehicle={vehicle}
+            favorited={vehicle.favorited}
+            view={isList ? "list" : "grid"}
+            // "grid" is the 2-up compact mode; "column" is one full-width
+            // card per row, which is what the card's default assumes.
+            imageSizes={view === "grid" ? "(max-width: 1024px) 50vw, 25vw" : undefined}
+          />
         ))}
         {isLoading ? Array.from({ length: 3 }).map((_, i) => <VehicleCardSkeleton key={`skeleton-${i}`} view={isList ? "list" : "grid"} />) : null}
       </div>

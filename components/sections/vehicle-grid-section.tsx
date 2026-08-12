@@ -34,7 +34,9 @@ export function VehicleGridSection({
 
       <div className="mt-6 grid grid-cols-2 gap-3 px-4 sm:gap-5 sm:px-6 lg:grid-cols-4 lg:px-8">
         {vehicles.map((vehicle) => (
-          <VehicleCard key={vehicle.id} vehicle={vehicle} />
+          // 2-up on phones/tablets, 4-up from lg — the card's default `sizes`
+          // assumes a full-width 1-up card, which would over-fetch here.
+          <VehicleCard key={vehicle.id} vehicle={vehicle} imageSizes="(max-width: 1024px) 50vw, 25vw" />
         ))}
       </div>
     </section>

@@ -45,18 +45,20 @@ export async function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-[1.3fr_1fr_1fr]">
           <div className="col-span-2 sm:col-span-1">
-            <div className="relative h-16 w-32">
+            <div>
               <Image
-                src="/branding/logo-footer.webp"
+                src="/branding/KLB_white.webp"
                 alt="Kerala Lease Hub — lease cars, bikes, and every kind of vehicle across Kerala"
-                fill
-                className="object-contain object-left dark:hidden"
+                width={176}
+                height={96}
+                className="h-24 w-auto object-contain dark:hidden"
               />
               <Image
-                src="/branding/logo-footer-dark.avif"
+                src="/branding/KLB_black.webp"
                 alt="Kerala Lease Hub — lease cars, bikes, and every kind of vehicle across Kerala"
-                fill
-                className="hidden object-contain object-left dark:block"
+                width={174}
+                height={96}
+                className="hidden h-24 w-auto object-contain dark:block"
               />
             </div>
             <p className="mt-3 max-w-xs text-sm leading-6 text-muted-foreground">
@@ -65,8 +67,8 @@ export async function Footer() {
             </p>
             <ul className="mt-5 space-y-2.5">
               {TRUST_BADGES.map((badge) => (
-                <li key={badge.label} className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <badge.icon className="size-3.5 shrink-0 text-primary" />
+                <li key={badge.label} className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <badge.icon className="size-4.5 shrink-0 text-primary" />
                   {badge.label}
                 </li>
               ))}
@@ -81,9 +83,9 @@ export async function Footer() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={label}
-                      className="flex size-9 items-center justify-center rounded-full border border-border text-muted-foreground no-underline transition hover:border-primary/50 hover:text-primary"
+                      className="flex size-11 items-center justify-center rounded-full border border-border text-muted-foreground no-underline transition hover:border-primary/50 hover:text-primary"
                     >
-                      <Icon className="size-4" />
+                      <Icon className="size-5" />
                     </a>
                   </li>
                 ))}

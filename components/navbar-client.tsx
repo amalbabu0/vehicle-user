@@ -85,12 +85,32 @@ export function NavbarClient() {
     };
   }, [supabase]);
 
+  // Header py is 2 rather than 3 so the taller logo doesn't grow the sticky
+  // header proportionally — it costs viewport on every scrolled page.
   return (
-    <header className="glass-surface sticky top-0 z-40 border-b border-transparent px-4 py-3 sm:px-6 lg:px-8">
+    <header className="glass-surface sticky top-0 z-40 border-b border-transparent px-4 py-2 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-        <Link href="/" className="relative h-10 w-20 shrink-0 sm:h-11 sm:w-24" aria-label="Kerala Lease Hub — home">
-          <Image src="/branding/logo-footer.webp" alt="Kerala Lease Hub" fill className="object-contain object-left dark:hidden" priority />
-          <Image src="/branding/logo-footer-dark.avif" alt="Kerala Lease Hub" fill className="hidden object-contain object-left dark:block" priority />
+        {/* Explicit width/height rather than `fill`: with `fill` and no
+            `sizes` next/image assumes 100vw and downloads a 1920px-wide
+            asset for a ~100px slot. Intrinsic dimensions also reserve the
+            box, so the sticky header can't shift as the logo decodes. */}
+        <Link href="/" className="block shrink-0" aria-label="Kerala Lease Hub — home">
+          <Image
+            src="/branding/KLB_white.webp"
+            alt="Kerala Lease Hub"
+            width={118}
+            height={64}
+            className="h-14 w-auto object-contain sm:h-16 dark:hidden"
+            priority
+          />
+          <Image
+            src="/branding/KLB_black.webp"
+            alt="Kerala Lease Hub"
+            width={116}
+            height={64}
+            className="hidden h-14 w-auto object-contain sm:h-16 dark:block"
+            priority
+          />
         </Link>
 
         <nav className="hidden items-center gap-6 lg:flex">
@@ -103,12 +123,12 @@ export function NavbarClient() {
 
         <div className="flex items-center gap-1.5 sm:gap-2">
           {!resolved ? (
-            <Skeleton className="size-8 rounded-full" />
+            <Skeleton className="size-10 rounded-full" />
           ) : user ? (
             <DropdownMenu onOpenChange={(open) => { if (!open) setThemeExpanded(false); }}>
               <DropdownMenuTrigger asChild>
                 <button type="button" className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Open profile menu">
-                  <Avatar>
+                  <Avatar size="lg">
                     <AvatarImage src={user.avatarUrl ?? undefined} alt={user.fullName ?? user.email} />
                     <AvatarFallback>{(user.fullName ?? user.email).charAt(0).toUpperCase()}</AvatarFallback>
                   </Avatar>

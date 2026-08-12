@@ -35,10 +35,18 @@ function BookedOverlay({ compact = false }: { compact?: boolean }) {
   );
 }
 
+/** The card is dropped into grids of different column counts (1-up on
+ * /vehicles column view, 2-up on the homepage rows), and next/image can't
+ * infer that. Default to the 1-up case: guessing too small serves a
+ * visibly soft photo, guessing too large only costs bytes — and legibility
+ * of the photo is the whole point of the card. 2-up callers override. */
+const DEFAULT_GRID_IMAGE_SIZES = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw";
+
 export function VehicleCard({
   vehicle,
   favorited,
   view = "grid",
+  imageSizes = DEFAULT_GRID_IMAGE_SIZES,
 }: {
   vehicle: VehicleCardData;
   /** Only pass this when known for certain server-side (e.g. /favorites).
@@ -49,6 +57,10 @@ export function VehicleCard({
    * for the /vehicles list-view mode; "grid" (default) is the standard
    * photo-first card used everywhere else. */
   view?: "grid" | "list";
+  /** next/image `sizes` for the grid-view photo. Pass the real per-breakpoint
+   * width when this card sits in a multi-column grid. Ignored in list view,
+   * where the thumbnail is a fixed size. */
+  imageSizes?: string;
 }) {
   const isBooked = vehicle.bookingStatus === "booked";
   const cardImageUrl = vehicle.coverThumbnailUrl ?? vehicle.coverImageUrl;
@@ -83,24 +95,24 @@ export function VehicleCard({
             initialFavorited={favorited}
             disabled={isBooked}
             disabledReason={FAVORITE_DISABLED_REASON}
-            className={`${OVERLAY_ICON_CLASS} size-7`}
+            className={`${OVERLAY_ICON_CLASS} size-9`}
           />
-          <ShareButton slug={vehicle.slug} name={vehicle.name} className={`${OVERLAY_ICON_CLASS} size-7`} />
+          <ShareButton slug={vehicle.slug} name={vehicle.name} className={`${OVERLAY_ICON_CLASS} size-9`} />
         </div>
 
         <Link href={`/vehicles/${vehicle.slug}`} className="flex min-w-0 flex-1 gap-3 text-foreground no-underline">
-          <div className="relative size-24 shrink-0 overflow-hidden rounded-(--glass-radius) bg-muted sm:size-32">
+          <div className="relative size-32 shrink-0 overflow-hidden rounded-(--glass-radius) bg-muted sm:size-40">
             {cardImageUrl ? (
               <Image
                 src={cardImageUrl}
                 alt={altText}
                 fill
-                sizes="128px"
+                sizes="(max-width: 640px) 128px, 160px"
                 className={cn("object-cover transition duration-300 group-hover:scale-105", isBooked && "grayscale")}
               />
             ) : (
               <div className="flex h-full items-center justify-center text-muted-foreground">
-                <Car className="size-8" />
+                <Car className="size-11" />
               </div>
             )}
             {isBooked ? <BookedOverlay compact /> : null}
@@ -145,12 +157,12 @@ export function VehicleCard({
               src={cardImageUrl}
               alt={altText}
               fill
-              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 50vw, 25vw"
+              sizes={imageSizes}
               className={cn("object-cover transition duration-300 group-hover:scale-105", isBooked && "grayscale")}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-muted-foreground">
-              <Car className="size-10" />
+              <Car className="size-14" />
             </div>
           )}
           {isBooked ? <BookedOverlay /> : null}
@@ -179,7 +191,7 @@ export function VehicleCardSkeleton({ view = "grid" }: { view?: "grid" | "list" 
   if (view === "list") {
     return (
       <div className="glass-surface flex gap-3 overflow-hidden rounded-(--glass-radius-lg) p-2 sm:p-3">
-        <div className="size-24 shrink-0 animate-pulse rounded-(--glass-radius) bg-muted sm:size-32" />
+        <div className="size-32 shrink-0 animate-pulse rounded-(--glass-radius) bg-muted sm:size-40" />
         <div className="flex flex-1 flex-col justify-center gap-3">
           <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
           <div className="h-5 w-1/2 animate-pulse rounded bg-muted" />

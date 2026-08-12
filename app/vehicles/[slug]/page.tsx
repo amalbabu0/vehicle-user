@@ -285,7 +285,7 @@ export default async function VehicleDetailPage({ params }: PageProps) {
             </h2>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
               {relatedVehicles.map((related) => (
-                <VehicleCard key={related.id} vehicle={related} />
+                <VehicleCard key={related.id} vehicle={related} imageSizes="(max-width: 1024px) 50vw, 25vw" />
               ))}
             </div>
           </section>

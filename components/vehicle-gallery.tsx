@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { Camera, Car } from "lucide-react";
+import { Camera, Car, ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
 import { FavoriteButton } from "@/components/favorite-button";
 import { ShareButton } from "@/components/share-button";
 import { cn } from "@/lib/utils";
@@ -34,11 +34,33 @@ export function VehicleGallery({
   isBooked?: boolean;
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [zoomed, setZoomed] = useState(false);
+
+  const count = images.length;
+  const step = useCallback((delta: number) => setActiveIndex((i) => (i + delta + count) % count), [count]);
+
+  // Escape/arrow keys only while the full-screen viewer is open, and lock
+  // background scroll so the page behind doesn't move under the overlay.
+  useEffect(() => {
+    if (!zoomed) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setZoomed(false);
+      else if (event.key === "ArrowRight") step(1);
+      else if (event.key === "ArrowLeft") step(-1);
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [zoomed, step]);
 
   if (images.length === 0) {
     return (
       <div className="flex aspect-4/3 w-full items-center justify-center rounded-(--glass-radius-lg) bg-muted text-muted-foreground">
-        <Car className="size-16" />
+        <Car className="size-24" />
       </div>
     );
   }
@@ -48,20 +70,37 @@ export function VehicleGallery({
   return (
     <div className="space-y-3">
       <div className="relative aspect-4/3 w-full overflow-hidden rounded-(--glass-radius-lg) bg-muted">
-        <Image
-          src={active.mediumUrl ?? active.url}
-          alt={`${name} — photo ${activeIndex + 1}`}
-          fill
-          priority
-          sizes="(max-width: 1024px) 100vw, 60vw"
-          className={cn("object-cover", isBooked && "grayscale")}
-        />
+        {/* The photo itself is the tap target for the full-screen viewer.
+            Absolutely positioned so next/image's `fill` still measures
+            against it, and left below the overlay controls in z-order so
+            Favorite/Share stay clickable. */}
+        <button
+          type="button"
+          onClick={() => setZoomed(true)}
+          aria-label={`View photo ${activeIndex + 1} of ${name} full screen`}
+          className="absolute inset-0 cursor-zoom-in"
+        >
+          <Image
+            src={active.mediumUrl ?? active.url}
+            alt={`${name} — photo ${activeIndex + 1}`}
+            fill
+            priority
+            sizes="(max-width: 1024px) 100vw, 60vw"
+            className={cn("object-cover", isBooked && "grayscale")}
+          />
+          <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md">
+            <Expand className="size-4" /> Tap to enlarge
+          </span>
+        </button>
+        {/* These three are labels, not controls — `pointer-events-none` keeps
+            the whole photo tappable underneath them. Without it the booked
+            scrim in particular covers the entire image and swallows the tap. */}
         {isBooked ? (
-          <div className="absolute inset-0 z-[5] flex items-center justify-center bg-black/50">
+          <div className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center bg-black/50">
             <span className="rounded-full bg-black/70 px-4 py-2 text-sm font-bold tracking-wide text-white uppercase">Already Booked</span>
           </div>
         ) : (
-          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-600/30 bg-background/80 px-3 py-1 backdrop-blur-md">
+          <div className="pointer-events-none absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-600/30 bg-background/80 px-3 py-1 backdrop-blur-md">
             <span className="size-1.5 rounded-full bg-emerald-500" />
             <span className="text-xs font-semibold">Available for lease</span>
           </div>
@@ -77,7 +116,7 @@ export function VehicleGallery({
           <ShareButton slug={slug} name={name} className={OVERLAY_ICON_CLASS} />
         </div>
         {images.length > 1 ? (
-          <div className="absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-1 text-white backdrop-blur-md">
+          <div className="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-1 text-white backdrop-blur-md">
             <Camera className="size-3.5" />
             <span className="text-xs font-medium">
               {activeIndex + 1}/{images.length}
@@ -95,13 +134,79 @@ export function VehicleGallery({
               aria-label={`View photo ${index + 1} of ${name}`}
               aria-current={index === activeIndex}
               className={cn(
-                "relative size-16 shrink-0 overflow-hidden rounded-lg border-2 transition",
+                "relative size-20 shrink-0 overflow-hidden rounded-lg border-2 transition sm:size-24",
                 index === activeIndex ? "border-primary" : "border-transparent opacity-70 hover:opacity-100"
               )}
             >
-              <Image src={image.thumbnailUrl ?? image.url} alt="" fill sizes="64px" className={cn("object-cover", isBooked && "grayscale")} />
+              <Image
+                src={image.thumbnailUrl ?? image.url}
+                alt=""
+                fill
+                sizes="(max-width: 640px) 80px, 96px"
+                className={cn("object-cover", isBooked && "grayscale")}
+              />
             </button>
           ))}
+        </div>
+      ) : null}
+
+      {zoomed ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${name} — photo ${activeIndex + 1} of ${count}`}
+          className="fixed inset-0 z-50 flex flex-col bg-black/95"
+        >
+          <div className="flex items-center justify-between px-4 py-3 text-white">
+            <span className="text-sm font-medium">
+              {activeIndex + 1} / {count}
+            </span>
+            <button
+              type="button"
+              onClick={() => setZoomed(false)}
+              aria-label="Close full screen photo"
+              className="inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+              autoFocus
+            >
+              <X className="size-6" />
+            </button>
+          </div>
+
+          {/* Full-resolution source, contained rather than cropped — the
+              point of this view is seeing the whole photo, not filling the
+              viewport with part of it. */}
+          <div className="relative min-h-0 flex-1">
+            <Image
+              src={active.url}
+              alt={`${name} — photo ${activeIndex + 1}`}
+              fill
+              sizes="100vw"
+              className="object-contain"
+            />
+          </div>
+
+          {count > 1 ? (
+            <div className="flex items-center justify-center gap-6 px-4 py-5">
+              <button
+                type="button"
+                onClick={() => step(-1)}
+                aria-label="Previous photo"
+                className="inline-flex size-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+              >
+                <ChevronLeft className="size-6" />
+              </button>
+              <button
+                type="button"
+                onClick={() => step(1)}
+                aria-label="Next photo"
+                className="inline-flex size-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+              >
+                <ChevronRight className="size-6" />
+              </button>
+            </div>
+          ) : (
+            <div className="pb-5" />
+          )}
         </div>
       ) : null}
     </div>

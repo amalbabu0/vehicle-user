@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, ArrowRight } from "lucide-react";
-import appIcon from "@/app/icon.png";
 import { GoogleIcon } from "@/components/google-icon";
 import { login, signInWithGoogle } from "@/app/actions/auth";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -81,7 +80,12 @@ export function LoginForm() {
   return (
     <>
       <div className="mb-6 flex flex-col items-center gap-3 text-center">
-        <Image src={appIcon} alt="" width={40} height={40} className="size-10" priority />
+        {/* The full brand badge rather than the 40px app icon — at this size
+            the shield, wordmark and tagline are all actually readable, so the
+            login screen identifies itself. Swapped by theme via CSS (not
+            useTheme) so it renders correctly on the server pass too. */}
+        <Image src="/branding/logo-light.webp" alt="Kerala Lease Hub" width={80} height={80} className="size-20 object-contain dark:hidden" priority />
+        <Image src="/branding/logo-dark.webp" alt="Kerala Lease Hub" width={80} height={80} className="hidden size-20 object-contain dark:block" priority />
         <h1 className="text-xl font-semibold">Sign in</h1>
       </div>
 
