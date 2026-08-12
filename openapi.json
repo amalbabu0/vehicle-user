@@ -1,0 +1,458 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Kerala Lease Hub — Public API",
+    "version": "1.0.0",
+    "description": "HTTP surface of the public (user-facing) Next.js app.\n\nHand-written against the route handlers in `app/api/**/route.ts`; it is not generated at build time, so re-check it when those handlers change.\n\nTwo things about auth are easy to get wrong here:\n\n- Session auth is a **httpOnly cookie** set by `@supabase/ssr`, not a bearer token. There is no login endpoint in this document — sign-in happens through Next.js Server Actions, which are not addressable REST operations.\n- `POST /api/revalidate` is **app-to-app**, called by the admin app with a shared secret header. It is not reachable with a user session.\n\nRow-level security in Postgres, not these handlers, is the real authorization boundary for favorites: every query runs through the cookie-bound client and `favorites_all_own` scopes rows to `auth.uid()`.",
+    "contact": {
+      "name": "Kerala Lease Hub",
+      "url": "https://keralaleasehub.online/contact"
+    }
+  },
+  "servers": [
+    { "url": "https://keralaleasehub.online", "description": "Production" },
+    { "url": "http://localhost:3001", "description": "Local development" }
+  ],
+  "tags": [
+    { "name": "Catalog", "description": "Public, unauthenticated vehicle browsing." },
+    { "name": "Favorites", "description": "Per-account saved listings. Requires a session cookie." },
+    { "name": "Internal", "description": "Machine-to-machine endpoints not intended for browsers." }
+  ],
+  "security": [],
+  "paths": {
+    "/api/vehicles/search": {
+      "get": {
+        "operationId": "searchVehicles",
+        "summary": "Search published vehicles",
+        "description": "Cursor-paginated catalog search. Public: no session required. When a session cookie is present the `favorited` flag on each result reflects that account, otherwise it is always false.\n\nAn unknown `brand`, `category` or `district` slug yields zero results rather than being ignored.",
+        "tags": ["Catalog"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "Free text, substring-matched against listing name and model.",
+            "schema": { "type": "string", "maxLength": 100, "pattern": "^[^\\x00-\\x1f]*$" }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": { "$ref": "#/components/schemas/Slug" }
+          },
+          {
+            "name": "brand",
+            "in": "query",
+            "required": false,
+            "schema": { "$ref": "#/components/schemas/Slug" }
+          },
+          {
+            "name": "district",
+            "in": "query",
+            "required": false,
+            "description": "District slug. Also matches taluks beneath that district.",
+            "schema": { "$ref": "#/components/schemas/Slug" }
+          },
+          {
+            "name": "fuelType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["Petrol", "Diesel", "CNG", "LPG", "Electric", "Hybrid", "Hydrogen"]
+            }
+          },
+          {
+            "name": "transmission",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["Manual", "Automatic (AT)", "AMT", "CVT", "DCT", "iMT", "Tiptronic", "Sequential", "Semi-Automatic"]
+            }
+          },
+          {
+            "name": "condition",
+            "in": "query",
+            "required": false,
+            "description": "Free text, substring-matched. Listers type this themselves, so there is no fixed vocabulary.",
+            "schema": { "type": "string", "maxLength": 50, "pattern": "^[^\\x00-\\x1f]*$" }
+          },
+          {
+            "name": "ownerType",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["direct", "agent"] }
+          },
+          {
+            "name": "minPrice",
+            "in": "query",
+            "required": false,
+            "description": "Inclusive lower bound on the lease amount, in whole rupees.",
+            "schema": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100000000 }
+          },
+          {
+            "name": "maxPrice",
+            "in": "query",
+            "required": false,
+            "description": "Inclusive upper bound on the lease amount, in whole rupees.",
+            "schema": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100000000 }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "required": false,
+            "description": "Registration year. Exact match only — 2020 excludes a 2021 vehicle.",
+            "schema": { "type": "integer", "format": "int32", "minimum": 1900, "maximum": 2100 }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["latest", "price_asc", "price_desc", "popular"], "default": "latest" }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "Opaque keyset cursor from a previous response's `nextCursor`.",
+            "schema": { "$ref": "#/components/schemas/Cursor" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of matching vehicles.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VehiclePage" } } }
+          },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/favorites": {
+      "post": {
+        "operationId": "toggleFavorite",
+        "summary": "Toggle a vehicle in the caller's favorites",
+        "description": "Adds the vehicle if absent, removes it if present, and reports the resulting state. Idempotency is per-call, not per-outcome: calling twice returns to the original state.\n\nNote the handler validates the body **before** checking the session, so a malformed body from a signed-out caller returns 400 rather than 401.",
+        "tags": ["Favorites"],
+        "security": [{ "sessionCookie": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ToggleFavoriteRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The favorite state after the toggle.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FavoriteState" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "409": {
+            "description": "The vehicle is booked and cannot be favorited.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/favorites/ids": {
+      "get": {
+        "operationId": "listFavoriteIds",
+        "summary": "List the caller's favorited vehicle ids",
+        "description": "Progressive-enhancement fetch used by the client-side favorites context. Deliberately returns `200` with an empty array for a signed-out visitor rather than `401`, so the UI does not have to special-case anonymous browsing.",
+        "tags": ["Favorites"],
+        "security": [{ "sessionCookie": [] }, {}],
+        "responses": {
+          "200": {
+            "description": "Favorited vehicle ids, empty when signed out.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FavoriteIds" } } }
+          },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/favorites/list": {
+      "get": {
+        "operationId": "listFavorites",
+        "summary": "List the caller's favorited vehicles",
+        "description": "Cursor-paginated, 20 per page. Every returned vehicle has `favorited: true` by construction.",
+        "tags": ["Favorites"],
+        "security": [{ "sessionCookie": [] }],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": { "$ref": "#/components/schemas/Cursor" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of favorited vehicles.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VehiclePage" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/public-config": {
+      "get": {
+        "operationId": "getPublicConfig",
+        "summary": "Runtime public configuration",
+        "description": "Serves the handful of non-secret values the browser needs. This is the runtime-delivery alternative to build-time `NEXT_PUBLIC_` inlining — it adds no secrecy, it only keeps the prefix out of variable names. Every value here is one the browser receives either way.",
+        "tags": ["Catalog"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Public configuration values.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Edge-cached for 60s.",
+                "schema": { "type": "string", "maxLength": 200 }
+              }
+            },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PublicConfig" } } }
+          },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/revalidate": {
+      "post": {
+        "operationId": "revalidateCachedPages",
+        "summary": "Invalidate cached pages after a listing changes",
+        "description": "Called by the admin app immediately after a publish/archive/sold transition so the cached vehicle page, homepage and sitemap refresh without waiting out their revalidate windows.\n\nAuthenticated by a shared secret header, not a user session. Always revalidates `/` and `/sitemap.xml`; also revalidates `/vehicles/{slug}` when a slug is supplied.",
+        "tags": ["Internal"],
+        "security": [{ "revalidateSecret": [] }],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RevalidateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Revalidation queued.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RevalidateResult" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "sb-access-token",
+        "description": "httpOnly session cookie issued by Supabase Auth via `@supabase/ssr`. The exact cookie name is project-scoped (`sb-<project-ref>-auth-token`); the value here is representative. Not readable from JavaScript by design."
+      },
+      "revalidateSecret": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-revalidate-secret",
+        "description": "Shared secret between the admin and user apps. Never exposed to browsers."
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "The request body or parameters failed validation.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "Unauthorized": {
+        "description": "Missing or invalid credentials.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "ServerError": {
+        "description": "Unexpected server error.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    },
+    "schemas": {
+      "Slug": {
+        "type": "string",
+        "description": "URL-safe identifier: lowercase letters, digits and hyphens.",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+        "minLength": 1,
+        "maxLength": 80
+      },
+      "Cursor": {
+        "type": "string",
+        "description": "Opaque keyset pagination cursor. Treat as an opaque token; do not construct one.",
+        "minLength": 1,
+        "maxLength": 200,
+        "pattern": "^[A-Za-z0-9_.:+=-]+$"
+      },
+      "Uuid": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+        "minLength": 36,
+        "maxLength": 36
+      },
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["message"],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Human-readable explanation. Deliberately generic on auth failures.",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      },
+      "ToggleFavoriteRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["vehicleId"],
+        "properties": {
+          "vehicleId": { "$ref": "#/components/schemas/Uuid" }
+        }
+      },
+      "FavoriteState": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["favorited"],
+        "properties": {
+          "favorited": {
+            "type": "boolean",
+            "description": "True if the vehicle is now favorited, false if it was just removed."
+          }
+        }
+      },
+      "FavoriteIds": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ids"],
+        "properties": {
+          "ids": {
+            "type": "array",
+            "maxItems": 5000,
+            "items": { "$ref": "#/components/schemas/Uuid" }
+          }
+        }
+      },
+      "RevalidateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "slug": {
+            "allOf": [{ "$ref": "#/components/schemas/Slug" }],
+            "description": "Slug of the vehicle whose detail page should be revalidated. Omit to refresh only the homepage and sitemap."
+          }
+        }
+      },
+      "RevalidateResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["revalidated", "slug"],
+        "properties": {
+          "revalidated": { "type": "boolean" },
+          "slug": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Echo of the slug that was revalidated, or null if none was supplied."
+          }
+        }
+      },
+      "PublicConfig": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["supabaseUrl", "supabaseAnonKey", "turnstileSiteKey", "imagesCdnUrl", "siteUrl"],
+        "properties": {
+          "supabaseUrl": { "type": "string", "format": "uri", "maxLength": 300 },
+          "supabaseAnonKey": {
+            "type": "string",
+            "description": "Anon (publishable) key. RLS-scoped and safe for browsers — this is not the service-role key.",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "turnstileSiteKey": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "imagesCdnUrl": { "type": "string", "format": "uri", "maxLength": 300 },
+          "siteUrl": { "type": "string", "format": "uri", "maxLength": 300 }
+        }
+      },
+      "VehiclePage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["vehicles", "nextCursor"],
+        "properties": {
+          "vehicles": {
+            "type": "array",
+            "maxItems": 20,
+            "items": { "$ref": "#/components/schemas/VehicleCard" }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 200,
+            "description": "Pass back as `cursor` for the next page. Null when the last page has been reached."
+          }
+        }
+      },
+      "VehicleCard": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Summary of a published listing, as rendered on a catalog card. Mirrors `lib/types/vehicle-card.ts`.",
+        "required": [
+          "id", "slug", "name", "brandName", "model", "registrationYear", "fuelType",
+          "transmission", "kmDriven", "leaseAmount", "leasePeriod", "districtName",
+          "locationName", "coverImageUrl", "coverThumbnailUrl", "viewCount",
+          "publishedAt", "verified", "bookingStatus"
+        ],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/Uuid" },
+          "slug": { "$ref": "#/components/schemas/Slug" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "brandName": { "type": "string", "nullable": true, "maxLength": 100 },
+          "model": { "type": "string", "nullable": true, "maxLength": 100 },
+          "registrationYear": { "type": "integer", "format": "int32", "nullable": true, "minimum": 1900, "maximum": 2100 },
+          "fuelType": { "type": "string", "nullable": true, "maxLength": 30 },
+          "transmission": { "type": "string", "nullable": true, "maxLength": 30 },
+          "kmDriven": { "type": "integer", "format": "int64", "nullable": true, "minimum": 0, "maximum": 10000000 },
+          "leaseAmount": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "maximum": 100000000,
+            "description": "Lease amount in whole rupees for one `leasePeriod`. This is not a sale price."
+          },
+          "leasePeriod": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "Free text entered by the lister, e.g. \"month\", \"3 months\", \"1 year\"."
+          },
+          "districtName": { "type": "string", "nullable": true, "maxLength": 100 },
+          "locationName": { "type": "string", "nullable": true, "maxLength": 100 },
+          "coverImageUrl": { "type": "string", "format": "uri", "nullable": true, "maxLength": 500 },
+          "coverThumbnailUrl": { "type": "string", "format": "uri", "nullable": true, "maxLength": 500 },
+          "viewCount": { "type": "integer", "format": "int64", "minimum": 0, "maximum": 1000000000 },
+          "publishedAt": { "type": "string", "format": "date-time", "nullable": true, "maxLength": 40 },
+          "verified": { "type": "boolean" },
+          "bookingStatus": {
+            "type": "string",
+            "enum": ["available", "booked"],
+            "description": "A booked vehicle stays visible but cannot be leased or favorited."
+          },
+          "favorited": {
+            "type": "boolean",
+            "description": "Whether the calling account has favorited this vehicle. Always false for anonymous callers; always true from /api/favorites/list."
+          }
+        }
+      }
+    }
+  }
+}
