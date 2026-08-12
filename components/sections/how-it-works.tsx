@@ -26,14 +26,22 @@ export function HowItWorks() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <h2 className="text-center text-2xl font-semibold sm:text-3xl">How it works</h2>
-      <div className="mt-8 grid gap-8 sm:grid-cols-3">
+      {/* Three across at every width, including phones. A 375px screen leaves
+          roughly 106px per column, so the icon, headings and body all step
+          down a size below `sm` and the gap tightens from 8 to 3 — at the
+          desktop sizes the copy would be a very tall, very narrow ribbon. */}
+      <div className="mt-8 grid grid-cols-3 gap-3 sm:gap-8">
         {STEPS.map((step) => (
           <div key={step.title} className="flex flex-col items-center text-center">
-            <span className="flex size-16 items-center justify-center rounded-2xl border border-border bg-muted/30">
-              <step.icon className="size-7 text-primary" />
+            <span className="flex size-11 items-center justify-center rounded-xl border border-border bg-muted/30 sm:size-16 sm:rounded-2xl">
+              <step.icon className="size-5 text-primary sm:size-7" />
             </span>
-            <h3 className="mt-5 font-semibold">{step.title}</h3>
-            <p className="mt-2 max-w-xs text-sm text-muted-foreground">{step.description}</p>
+            <h3 className="mt-3 text-sm font-semibold sm:mt-5 sm:text-base">{step.title}</h3>
+            {/* max-w-xs only from sm: below that the column is already far
+                narrower than 20rem, so the constraint does nothing. */}
+            <p className="mt-1 text-xs leading-snug text-muted-foreground sm:mt-2 sm:max-w-xs sm:text-sm sm:leading-normal">
+              {step.description}
+            </p>
           </div>
         ))}
       </div>
