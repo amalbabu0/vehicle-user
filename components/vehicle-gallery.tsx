@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Camera, Car, ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
 import { FavoriteButton } from "@/components/favorite-button";
@@ -15,6 +15,41 @@ export type GalleryImage = { url: string; mediumUrl: string | null; thumbnailUrl
 const OVERLAY_ICON_CLASS = "border border-white/15 bg-black/40 text-white backdrop-blur-md hover:bg-black/60";
 
 const FAVORITE_DISABLED_REASON = "This vehicle is already booked and can't be favorited right now.";
+
+// Swipe must travel at least this far, and more horizontally than
+// vertically, to count as a photo change rather than an incidental touch
+// (a tap, or a vertical scroll attempt landing on the gallery).
+const SWIPE_THRESHOLD_PX = 40;
+
+/** Touch handlers for swipe-to-change-photo. Exposes `wasSwipe` so a caller
+ * with its own tap handler (e.g. "open full screen") can skip that action
+ * when the touch that just ended was actually a swipe, not a tap. */
+function useSwipeStep(step: (delta: number) => void) {
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const wasSwipe = useRef(false);
+
+  const onTouchStart = useCallback((event: React.TouchEvent) => {
+    const touch = event.touches[0];
+    start.current = { x: touch.clientX, y: touch.clientY };
+    wasSwipe.current = false;
+  }, []);
+
+  const onTouchEnd = useCallback(
+    (event: React.TouchEvent) => {
+      if (!start.current) return;
+      const touch = event.changedTouches[0];
+      const deltaX = touch.clientX - start.current.x;
+      const deltaY = touch.clientY - start.current.y;
+      start.current = null;
+      if (Math.abs(deltaX) < SWIPE_THRESHOLD_PX || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+      wasSwipe.current = true;
+      step(deltaX < 0 ? 1 : -1);
+    },
+    [step]
+  );
+
+  return { onTouchStart, onTouchEnd, wasSwipe };
+}
 
 export function VehicleGallery({
   images,
@@ -38,6 +73,8 @@ export function VehicleGallery({
 
   const count = images.length;
   const step = useCallback((delta: number) => setActiveIndex((i) => (i + delta + count) % count), [count]);
+  const mainSwipe = useSwipeStep(step);
+  const zoomSwipe = useSwipeStep(step);
 
   // Escape/arrow keys only while the full-screen viewer is open, and lock
   // background scroll so the page behind doesn't move under the overlay.
@@ -76,7 +113,12 @@ export function VehicleGallery({
             Favorite/Share stay clickable. */}
         <button
           type="button"
-          onClick={() => setZoomed(true)}
+          onClick={() => {
+            if (mainSwipe.wasSwipe.current) return;
+            setZoomed(true);
+          }}
+          onTouchStart={mainSwipe.onTouchStart}
+          onTouchEnd={mainSwipe.onTouchEnd}
           aria-label={`View photo ${activeIndex + 1} of ${name} full screen`}
           className="absolute inset-0 cursor-zoom-in"
         >
@@ -175,7 +217,7 @@ export function VehicleGallery({
           {/* Full-resolution source, contained rather than cropped — the
               point of this view is seeing the whole photo, not filling the
               viewport with part of it. */}
-          <div className="relative min-h-0 flex-1">
+          <div className="relative min-h-0 flex-1" onTouchStart={zoomSwipe.onTouchStart} onTouchEnd={zoomSwipe.onTouchEnd}>
             <Image
               src={active.url}
               alt={`${name} — photo ${activeIndex + 1}`}

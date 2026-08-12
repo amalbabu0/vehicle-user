@@ -117,8 +117,9 @@ action** on the site. Make it effortless.
   loading states, infinite scroll on `/vehicles`.
 - ✅ Filters: bottom-sheet drawer below `lg:`, active-filter count badge on the
   trigger button, debounced text search.
-- ✅ Detail page: gallery at top (tap-to-switch thumbnails; no pinch-zoom/swipe yet —
-  gap below), specs in a scannable key-value grid, description below specs.
+- ✅ Detail page: gallery at top (tap-to-switch thumbnails, swipe left/right to
+  change photo on both the main image and the full-screen viewer; no pinch-zoom
+  yet — gap below), specs in a scannable key-value grid, description below specs.
 - ✅ Contact: Call + WhatsApp buttons surfaced right under the gallery on
   mobile/tablet (not buried below the spec sheet) — not yet a viewport-pinned sticky
   bar, so still requires some scrolling on a long detail page. Gap below.
@@ -126,6 +127,6 @@ action** on the site. Make it effortless.
   throughout the auth and filter forms.
 - ✅ Base font size is the Tailwind default `text-sm`/`text-base` scale (≥16px for
   body text where it matters for iOS zoom).
-- ⚠️ Gaps to close: swipe/pinch-zoom gallery gestures, a true viewport-pinned sticky
+- ⚠️ Gaps to close: pinch-zoom on the gallery, a true viewport-pinned sticky
   contact bar (current version scrolls with content), image `alt` text audit, and an
   explicit `prefers-reduced-motion` check on the remaining CSS entrance animation.
