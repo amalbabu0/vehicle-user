@@ -8,6 +8,8 @@ import { HowItWorks } from "@/components/sections/how-it-works";
 import { Testimonials } from "@/components/sections/testimonials";
 import { Faq } from "@/components/sections/faq";
 import { VehicleSectionSkeleton } from "@/components/sections/section-skeleton";
+import { BrowseCategoriesSkeleton } from "@/components/sections/browse-categories-skeleton";
+import { TestimonialsSkeleton } from "@/components/sections/testimonials-skeleton";
 import { FaqJsonLd } from "@/components/seo/faq-jsonld";
 
 export const revalidate = 120;
@@ -24,7 +26,7 @@ export default function HomePage() {
       <main>
         <Hero />
 
-        <Suspense fallback={null}>
+        <Suspense fallback={<BrowseCategoriesSkeleton />}>
           <BrowseCategories />
         </Suspense>
 
@@ -34,7 +36,7 @@ export default function HomePage() {
 
         <HowItWorks />
 
-        <Suspense fallback={null}>
+        <Suspense fallback={<TestimonialsSkeleton />}>
           <Testimonials />
         </Suspense>
 
