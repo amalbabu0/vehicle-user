@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Car, Bike, Scooter, CarFront, Zap, Truck, type LucideIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Car, Bike, Scooter, CarFront, Zap, Truck, type LucideIcon } from "lucide-react";
 import { getCategoriesWithCounts } from "@/lib/data/home";
 
 // Keyed by slug (admin migration 0011) rather than name, since slugs are
@@ -20,11 +19,11 @@ export async function BrowseCategories() {
   if (categories.length === 0) return null;
 
   return (
-    // Full-bleed section so the wash can run edge to edge; the content keeps
-    // its own max-w-7xl inside. Anchoring the gradient to a max-width
-    // container instead would cut it off with a visible hard edge on wide
-    // screens.
-    <section className="relative overflow-hidden py-12">
+    // Full-bleed so the wash can run edge to edge; the content keeps the
+    // same max-w-7xl / px / py-10 rhythm as every other homepage section.
+    // Anchoring the gradient to the max-width container instead would cut it
+    // off with a visible hard edge on wide screens.
+    <section className="relative overflow-hidden py-10">
       {/* Same two-stop radial motif as the hero (see hero-content.tsx), with
           the circles mirrored to the opposite corners so scrolling from one
           section to the next reads as rhythm rather than a repeat. */}
@@ -37,20 +36,19 @@ export async function BrowseCategories() {
       <div aria-hidden className="mx-auto mb-10 h-px max-w-7xl bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 text-center md:text-left">
-          <h2 className="text-3xl font-semibold sm:text-4xl">Browse by category</h2>
-          <p className="mt-2 max-w-2xl text-base text-muted-foreground">
-            Every kind of vehicle available for lease across Kerala — pick a category to start.
-          </p>
-        </div>
+        <h2 className="text-2xl font-semibold sm:text-3xl">Browse by category</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Every kind of vehicle available for lease across Kerala.
+        </p>
 
-        {/* Square icon tiles, 3-up on phones and 6-up from lg. The icon carries
-            the tile; the label is deliberately small and secondary rather than
-            dropped entirely, because categories are database rows — only the
-            six slugs above have a glyph and anything else falls back to the
-            car icon, so an unlabelled tile would be indistinguishable from its
-            neighbours the moment a new category is added. */}
-        <div className="grid grid-cols-3 gap-3 sm:gap-4 lg:grid-cols-6">
+        {/* Square icon tiles, 3-up on phones and 6-up from lg. The icon
+            carries the tile; the label is deliberately small and secondary
+            rather than dropped entirely, because categories are database
+            rows — only the six slugs above have a glyph and anything else
+            falls back to the car icon, so an unlabelled tile would be
+            indistinguishable from its neighbours the moment a new category
+            is added. */}
+        <div className="mt-6 grid grid-cols-3 gap-3 sm:gap-4 lg:grid-cols-6">
           {categories.map((category) => {
             const Icon = CATEGORY_ICONS[category.slug] ?? Car;
             return (
@@ -60,20 +58,11 @@ export async function BrowseCategories() {
                 aria-label={`${category.name} — ${category.count.toLocaleString("en-IN")} vehicle${category.count === 1 ? "" : "s"} available for lease`}
                 className="glass-surface glass-specular group flex aspect-square flex-col items-center justify-center gap-2 rounded-(--glass-radius-lg) p-2 text-center no-underline transition duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
-                <Icon className="size-10 text-muted-foreground transition duration-300 group-hover:scale-105 group-hover:text-primary sm:size-12" />
+                <Icon className="size-9 text-primary transition duration-300 group-hover:scale-110 sm:size-11" />
                 <span className="line-clamp-2 text-xs font-medium text-foreground sm:text-sm">{category.name}</span>
               </Link>
             );
           })}
-        </div>
-
-        <div className="mt-8 flex justify-center md:justify-start">
-          <Link href="/vehicles" className="no-underline">
-            <Button size="lg" className="group rounded-full">
-              View entire inventory
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-            </Button>
-          </Link>
         </div>
       </div>
     </section>

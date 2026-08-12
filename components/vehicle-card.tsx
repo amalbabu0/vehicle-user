@@ -25,8 +25,14 @@ const YEAR = 365 * DAY;
  * fit beside the district name, so it wrapped to two lines and the
  * vertically-centred location ended up colliding with it. The full timestamp
  * is still available as the `title`/`dateTime` on the element. */
-function compactAgo(published: string): string {
-  const seconds = Math.max(0, (Date.now() - new Date(published).getTime()) / 1000);
+function compactAgo(published: string): string | null {
+  const publishedAt = new Date(published).getTime();
+  // An unparseable date makes every comparison below false and the function
+  // falls through to the final branch, rendering the string "NaNy ago" in
+  // the card. Bail out instead and let the caller omit the element.
+  if (Number.isNaN(publishedAt)) return null;
+
+  const seconds = Math.max(0, (Date.now() - publishedAt) / 1000);
   if (seconds < MINUTE) return "just now";
   if (seconds < HOUR) return `${Math.floor(seconds / MINUTE)}m ago`;
   if (seconds < DAY) return `${Math.floor(seconds / HOUR)}h ago`;
@@ -99,6 +105,8 @@ export function VehicleCard({
     </div>
   );
 
+  const publishedLabel = vehicle.publishedAt ? compactAgo(vehicle.publishedAt) : null;
+
   // One line, always: the district truncates if it's long, the timestamp
   // never wraps and never shrinks. `min-w-0` is what actually lets the
   // district shrink — a flex item defaults to min-width:auto, so without it
@@ -106,9 +114,18 @@ export function VehicleCard({
   const footerRow = (
     <div className="flex items-center justify-between gap-2 pt-1 text-xs text-muted-foreground">
       <span className="min-w-0 truncate">{vehicle.districtName ?? "Kerala"}</span>
-      {vehicle.publishedAt ? (
-        <time dateTime={vehicle.publishedAt} title={new Date(vehicle.publishedAt).toLocaleString("en-IN")} className="shrink-0 whitespace-nowrap">
-          {compactAgo(vehicle.publishedAt)}
+      {vehicle.publishedAt && publishedLabel ? (
+        // This is a Server Component, so the tooltip is formatted on the
+        // server — pin the zone to IST rather than inheriting whatever
+        // region the function happens to run in, which would show a
+        // Kerala user a UTC time 5.5 hours off. `dateTime` stays the raw
+        // ISO value for machines.
+        <time
+          dateTime={vehicle.publishedAt}
+          title={new Date(vehicle.publishedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
+          className="shrink-0 whitespace-nowrap"
+        >
+          {publishedLabel}
         </time>
       ) : null}
     </div>
