@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { formatDistanceToNow } from "date-fns";
 import { BadgeCheck, Car } from "lucide-react";
 import { FavoriteButton } from "@/components/favorite-button";
 import { ShareButton } from "@/components/share-button";
@@ -14,6 +13,27 @@ import type { VehicleCardData } from "@/lib/types/vehicle-card";
 const OVERLAY_ICON_CLASS = "border border-white/15 bg-black/40 text-white backdrop-blur-md hover:bg-black/60";
 
 const FAVORITE_DISABLED_REASON = "This vehicle is already booked and can't be favorited right now.";
+
+const MINUTE = 60;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+const MONTH = 30 * DAY;
+const YEAR = 365 * DAY;
+
+/** "21h ago", not date-fns's "about 21 hours ago". The footer row has roughly
+ * 130px of text width in a 2-up card on a 375px phone; the long form doesn't
+ * fit beside the district name, so it wrapped to two lines and the
+ * vertically-centred location ended up colliding with it. The full timestamp
+ * is still available as the `title`/`dateTime` on the element. */
+function compactAgo(published: string): string {
+  const seconds = Math.max(0, (Date.now() - new Date(published).getTime()) / 1000);
+  if (seconds < MINUTE) return "just now";
+  if (seconds < HOUR) return `${Math.floor(seconds / MINUTE)}m ago`;
+  if (seconds < DAY) return `${Math.floor(seconds / HOUR)}h ago`;
+  if (seconds < MONTH) return `${Math.floor(seconds / DAY)}d ago`;
+  if (seconds < YEAR) return `${Math.floor(seconds / MONTH)}mo ago`;
+  return `${Math.floor(seconds / YEAR)}y ago`;
+}
 
 /** Grayscale photo + a scrim with visible "Already Booked" text (not just a
  * color change, which alone wouldn't reach screen readers or colorblind
@@ -79,10 +99,18 @@ export function VehicleCard({
     </div>
   );
 
+  // One line, always: the district truncates if it's long, the timestamp
+  // never wraps and never shrinks. `min-w-0` is what actually lets the
+  // district shrink — a flex item defaults to min-width:auto, so without it
+  // neither side gives and the row overflows instead of ellipsising.
   const footerRow = (
-    <div className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
-      <span>{vehicle.districtName ?? "Kerala"}</span>
-      {vehicle.publishedAt ? <span>{formatDistanceToNow(new Date(vehicle.publishedAt), { addSuffix: true })}</span> : null}
+    <div className="flex items-center justify-between gap-2 pt-1 text-xs text-muted-foreground">
+      <span className="min-w-0 truncate">{vehicle.districtName ?? "Kerala"}</span>
+      {vehicle.publishedAt ? (
+        <time dateTime={vehicle.publishedAt} title={new Date(vehicle.publishedAt).toLocaleString("en-IN")} className="shrink-0 whitespace-nowrap">
+          {compactAgo(vehicle.publishedAt)}
+        </time>
+      ) : null}
     </div>
   );
 
