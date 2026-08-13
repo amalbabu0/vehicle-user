@@ -74,7 +74,7 @@ export function shouldLogVisit(request: NextRequest): boolean {
  * row, so the log still records that a visit happened — matching how the auth
  * actions already record IPs (app/actions/auth.ts).
  */
-function clientIp(request: NextRequest): string {
+export function clientIp(request: NextRequest): string {
   const cloudflare = request.headers.get("cf-connecting-ip")?.trim();
   if (cloudflare) return cloudflare;
 

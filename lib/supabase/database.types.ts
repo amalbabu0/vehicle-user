@@ -768,6 +768,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_admin_or_lister: { Args: never; Returns: boolean }
+      is_ip_blocked: { Args: { p_ip: string }; Returns: boolean }
       log_audit_event: {
         Args: {
           p_action: string

@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest, type NextFetchEvent } from "next/server";
-import { recordVisit, shouldLogVisit } from "@/lib/visitor-log";
+import { clientIp, recordVisit, shouldLogVisit } from "@/lib/visitor-log";
+import { isIpBlocked } from "@/lib/ip-block";
 
 // Next.js 16 renamed Middleware to Proxy (same runtime/conventions). This
 // refreshes the Supabase session cookie and does one small optimistic
@@ -28,6 +29,19 @@ export async function proxy(request: NextRequest, event: NextFetchEvent) {
     callbackUrl.searchParams.set("code", code);
     if (next) callbackUrl.searchParams.set("next", next);
     return NextResponse.redirect(callbackUrl);
+  }
+
+  // Blocklist first, before the session lookup and before any logging. An
+  // address an admin has flagged as a threat should cost this app as little as
+  // possible: no Supabase auth round trip, and no visitor_logs row either —
+  // otherwise anyone hammering the site would fill the very log the admin uses
+  // to spot them. 403 rather than a redirect, since there is nowhere useful to
+  // send them.
+  if (await isIpBlocked(clientIp(request))) {
+    return new NextResponse("Access denied.", {
+      status: 403,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
   }
 
   let response = NextResponse.next({ request });
