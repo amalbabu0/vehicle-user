@@ -2,6 +2,7 @@ import "server-only";
 
 import type { NextRequest } from "next/server";
 import { createPublicClient } from "@/lib/supabase/public-client";
+import { env } from "@/lib/env";
 
 /**
  * Visitor IP logging for the admin app's "IP Logs" page.
@@ -82,20 +83,36 @@ export function clientIp(request: NextRequest): string {
   return forwarded || request.headers.get("x-real-ip")?.trim() || "unknown";
 }
 
+/**
+ * Goes through the record_visit() RPC rather than inserting directly.
+ *
+ * The table no longer accepts an anon INSERT: an unconditional insert policy
+ * meant anyone holding the public anon key could attribute hostile-looking
+ * traffic to an address of their choosing, and once the admin app grew a Block
+ * button that stopped being merely noisy — it became a way to get an innocent
+ * visitor blocked. The RPC takes a token this app holds server-side, which
+ * never reaches a browser. See admin migration 0040.
+ *
+ * No token configured means no logging. Deliberate: an empty log is a
+ * recoverable misconfiguration, an open one is not.
+ */
 export async function recordVisit(request: NextRequest, isAuthenticated: boolean): Promise<void> {
+  if (!env.VISITOR_LOG_TOKEN) return;
+
   try {
     const supabase = createPublicClient();
-    await supabase.from("visitor_logs").insert({
-      ip: clamp(clientIp(request), MAX_LENGTH.ip)!,
-      path: clamp(request.nextUrl.pathname, MAX_LENGTH.path)!,
-      user_agent: clamp(request.headers.get("user-agent"), MAX_LENGTH.userAgent),
-      referrer: clamp(request.headers.get("referer"), MAX_LENGTH.referrer),
+    await supabase.rpc("record_visit", {
+      p_token: env.VISITOR_LOG_TOKEN,
+      p_ip: clamp(clientIp(request), MAX_LENGTH.ip)!,
+      p_path: clamp(request.nextUrl.pathname, MAX_LENGTH.path)!,
+      p_user_agent: clamp(request.headers.get("user-agent"), MAX_LENGTH.userAgent),
+      p_referrer: clamp(request.headers.get("referer"), MAX_LENGTH.referrer),
       // cf-ipcountry before Vercel's equivalent for the same reason as the IP
       // above: x-vercel-ip-country geolocates whoever connected to Vercel,
       // which behind the Cloudflare proxy is the edge node rather than the
       // visitor. Cloudflare resolves it from the real client address.
-      country: clamp(request.headers.get("cf-ipcountry") ?? request.headers.get("x-vercel-ip-country"), 2),
-      is_authenticated: isAuthenticated,
+      p_country: clamp(request.headers.get("cf-ipcountry") ?? request.headers.get("x-vercel-ip-country"), 2),
+      p_is_authenticated: isAuthenticated,
     });
   } catch {
     // Swallowed deliberately. This runs detached from the response, so there

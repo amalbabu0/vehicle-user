@@ -30,6 +30,13 @@ export default function PrivacyPage() {
             profile info Google shares with us. If you contact a seller or save a favorite, that action is tied to
             your account.
           </p>
+          <h2 className="text-base font-semibold text-foreground">Visit logs</h2>
+          <p>
+            Every visit to this site is recorded along with the visitor&apos;s IP address, the page requested, the
+            browser&apos;s user agent, the referring page, and the country the address resolves to. This happens
+            whether or not you&apos;re signed in — no account is involved. We use these records to see how the site
+            is being used and to block addresses that abuse it. They are permanently deleted after 24 hours.
+          </p>
           <h2 className="text-base font-semibold text-foreground">What we don&apos;t do</h2>
           <p>
             We don&apos;t sell your data to third parties. Vehicle contact numbers are shown on listing pages so

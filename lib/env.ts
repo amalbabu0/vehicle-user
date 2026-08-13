@@ -47,6 +47,17 @@ const envSchema = z.object({
   // instead of waiting out the `revalidate` window. Never exposed to the
   // browser.
   REVALIDATE_SECRET: z.string().min(1),
+
+  // Authorizes this app to write visitor_logs rows via the record_visit() RPC
+  // (admin migration 0040). Never exposed to the browser — unlike
+  // SUPABASE_ANON_KEY, which /api/public-config deliberately hands out, this
+  // is read only inside proxy.ts.
+  //
+  // Optional so a missing value degrades to "no visit logging" rather than
+  // taking down every page in the app on boot. The RPC fails closed on a wrong
+  // or absent token regardless, so the worst case is an empty log, never an
+  // open one.
+  VISITOR_LOG_TOKEN: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
