@@ -51,11 +51,33 @@ export function shouldLogVisit(request: NextRequest): boolean {
   return true;
 }
 
-/** x-forwarded-for is a client-to-proxy chain; the first entry is the caller.
- * Vercel also sets x-real-ip. "unknown" rather than skipping the row, so the
- * log still records that a visit happened — matching how the auth actions
- * already record IPs (app/actions/auth.ts). */
+/**
+ * cf-connecting-ip first, and that order is not incidental.
+ *
+ * keralaleasehub.online is proxied through Cloudflare in front of Vercel, so
+ * the connection Vercel terminates comes from a Cloudflare edge node — which
+ * means x-forwarded-for's first entry is that edge, not the visitor. This was
+ * not theoretical: the first row this feature ever wrote logged
+ * 162.158.54.161, a Cloudflare range, for a visit from an ordinary browser.
+ * Left as-is, every visitor would have shown up as one of a handful of
+ * rotating Cloudflare addresses and the log would have been worthless.
+ *
+ * Cloudflare sets cf-connecting-ip to the real client address on every
+ * proxied request, overwriting any value a client tries to supply, so it is
+ * trustworthy as long as traffic actually arrives through Cloudflare. It
+ * could be spoofed by reaching the Vercel origin directly and bypassing the
+ * proxy — acceptable for a visit log, and the reason this is not used for
+ * anything that gates access.
+ *
+ * The x-forwarded-for/x-real-ip fallback keeps this working if the domain is
+ * ever taken off the Cloudflare proxy. "unknown" rather than dropping the
+ * row, so the log still records that a visit happened — matching how the auth
+ * actions already record IPs (app/actions/auth.ts).
+ */
 function clientIp(request: NextRequest): string {
+  const cloudflare = request.headers.get("cf-connecting-ip")?.trim();
+  if (cloudflare) return cloudflare;
+
   const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   return forwarded || request.headers.get("x-real-ip")?.trim() || "unknown";
 }
@@ -68,7 +90,11 @@ export async function recordVisit(request: NextRequest, isAuthenticated: boolean
       path: clamp(request.nextUrl.pathname, MAX_LENGTH.path)!,
       user_agent: clamp(request.headers.get("user-agent"), MAX_LENGTH.userAgent),
       referrer: clamp(request.headers.get("referer"), MAX_LENGTH.referrer),
-      country: request.headers.get("x-vercel-ip-country"),
+      // cf-ipcountry before Vercel's equivalent for the same reason as the IP
+      // above: x-vercel-ip-country geolocates whoever connected to Vercel,
+      // which behind the Cloudflare proxy is the edge node rather than the
+      // visitor. Cloudflare resolves it from the real client address.
+      country: clamp(request.headers.get("cf-ipcountry") ?? request.headers.get("x-vercel-ip-country"), 2),
       is_authenticated: isAuthenticated,
     });
   } catch {
