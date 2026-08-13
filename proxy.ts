@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest, type NextFetchEvent } from "next/server";
+import { recordVisit, shouldLogVisit } from "@/lib/visitor-log";
 
 // Next.js 16 renamed Middleware to Proxy (same runtime/conventions). This
 // refreshes the Supabase session cookie and does one small optimistic
@@ -14,7 +15,7 @@ const PROTECTED_PATHS: string[] = [
   // "/enquiries", "/profile", "/settings" — added when built
 ];
 
-export async function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest, event: NextFetchEvent) {
   // Some Supabase OAuth redirect configs land on "/" with ?code=... instead
   // of /auth/callback directly. Catching this here (not in app/page.tsx,
   // which used to read searchParams itself) means the homepage no longer
@@ -57,6 +58,15 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
+
+  // Visitor IP log for the admin app's IP Logs page. waitUntil keeps the
+  // insert off the response path — the visitor never waits on it — and this
+  // sits before the redirect branches below so a request that gets bounced to
+  // /login still counts as a visit. `user` is already resolved above for the
+  // auth redirects, so recording whether the visitor was signed in is free.
+  if (shouldLogVisit(request)) {
+    event.waitUntil(recordVisit(request, Boolean(user)));
+  }
 
   if (user && AUTH_PATHS.some((p) => path === p)) {
     return NextResponse.redirect(new URL("/", request.url));
