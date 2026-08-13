@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { DataDisclaimer } from "@/components/data-disclaimer";
 import { buildPageOg } from "@/lib/seo/page-metadata";
 
 const description = "Terms and conditions for using Kerala Lease Hub's vehicle leasing platform.";
@@ -36,6 +37,7 @@ export default function TermsPage() {
           </p>
           <h2 className="text-base font-semibold text-foreground">Accounts</h2>
           <p>Registered users are responsible for keeping their account credentials secure.</p>
+          <DataDisclaimer />
         </div>
       </main>
       <Footer />

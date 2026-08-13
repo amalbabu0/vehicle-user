@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { DataDisclaimer } from "@/components/data-disclaimer";
 import { buildPageOg } from "@/lib/seo/page-metadata";
 
 const description = "How Kerala Lease Hub collects, uses, and protects your information.";
@@ -36,6 +37,7 @@ export default function PrivacyPage() {
           </p>
           <h2 className="text-base font-semibold text-foreground">Cookies</h2>
           <p>This site uses cookies only to keep you signed in and to remember your theme preference.</p>
+          <DataDisclaimer />
         </div>
       </main>
       <Footer />
