@@ -92,7 +92,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // site name, Organization schema's areaServed, and this same phrase
   // applies to whichever district a search happens to mention.
   const title = `${vehicle.name}${vehicle.registrationYear ? ` ${vehicle.registrationYear}` : ""} for Lease in ${district} — ₹${vehicle.leaseAmount.toLocaleString("en-IN")}`;
-  const description = `Lease a ${vehicle.name}${vehicle.registrationYear ? ` (${vehicle.registrationYear})` : ""} in ${district} — ${[vehicle.fuelType, vehicle.transmission, vehicle.kmDriven ? `${vehicle.kmDriven.toLocaleString("en-IN")} km` : null].filter(Boolean).join(", ")}. ₹${vehicle.leaseAmount.toLocaleString("en-IN")}/${vehicle.leasePeriod}. Contact the owner directly on Kerala Lease Hub.`;
   // Ignored by Google (deprecated there since ~2009) but still read by
   // Bing and some other crawlers — cheap to include, matches what people
   // actually type ("<model> for lease", "<model> lease Kerala").
@@ -104,13 +103,61 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     vehicle.brandName ? `${vehicle.brandName} for lease Kerala` : null,
   ].filter((value): value is string => Boolean(value));
 
+  // ---- Share-preview shape -------------------------------------------
+  // WhatsApp is where listers actually share these, and the message they
+  // send already spells out every spec — model, fuel, transmission, lease
+  // amount, location, contact (see admin lib/vehicles/share.ts). A preview
+  // card repeating the same facts underneath is pure duplication, so the
+  // card is stripped to the photo and the shortest honest label.
+  //
+  // No description reaches the head at all, and that takes THREE deletions,
+  // because each one alone leaves the sentence in the card:
+  //   - openGraph.description — the tag WhatsApp reads first.
+  //   - twitter.description — same, for the platforms that read that block.
+  //   - the top-level `description`, explicitly null. Link-preview crawlers
+  //     fall back to plain <meta name="description"> when og:description is
+  //     absent, and null is what removes it: metadata fields this page
+  //     doesn't set are INHERITED from app/layout.tsx (which does set a
+  //     site-wide description), so merely omitting it would swap the
+  //     listing's description for the site's, not remove it. Nested
+  //     openGraph/twitter fields need no such null — a child that sets those
+  //     objects replaces the parent's wholesale.
+  //
+  // The description a human reads is untouched: it's the real one in the
+  // page body (<VehicleDescription />), not a meta tag. The SEO cost is
+  // giving up a hand-written meta description — Google composes result
+  // snippets from page content in most cases anyway, and title, canonical,
+  // keywords and the Vehicle JSON-LD (price, mileage, condition) all stay.
+  //
+  // og:title is the bare vehicle name rather than the SEO `title` above:
+  // WhatsApp always renders a title line, falling back to <title> when
+  // og:title is absent, so an empty card isn't reachable — the shortest
+  // identifying label is as close as it gets. <title> keeps the full
+  // keyword-bearing phrase for search.
+  //
+  // The medium variant (1200px wide, see the admin upload route) is
+  // preferred over the original (up to 1920px) as a hedge, not a fix: link
+  // previews degrade to a tiny thumbnail — or nothing — once the image
+  // exceeds the crawler's size cap, and medium bounds that across the whole
+  // catalog. It changes nothing for a typical listing (a sampled original
+  // measured 178KB against medium's 132KB — both comfortably under any cap),
+  // so whether a given card renders large or compact stays WhatsApp's call,
+  // not something these tags decide. Falls back to the original for listings
+  // uploaded before variants existed (migration 0019).
+  const coverMediumUrl = vehicle.images.find((image) => image.url === vehicle.coverImageUrl)?.mediumUrl;
+  const previewImage = coverMediumUrl ?? vehicle.coverImageUrl;
+
   return {
     title,
-    description,
+    description: null,
     keywords,
     alternates: { canonical: `/vehicles/${vehicle.slug}` },
-    openGraph: { title, description, images: vehicle.coverImageUrl ? [vehicle.coverImageUrl] : undefined, url: `${env.SITE_URL}/vehicles/${vehicle.slug}` },
-    twitter: { card: "summary_large_image", title, description },
+    openGraph: {
+      title: vehicle.name,
+      images: previewImage ? [{ url: previewImage, alt: vehicle.name }] : undefined,
+      url: `${env.SITE_URL}/vehicles/${vehicle.slug}`,
+    },
+    twitter: { card: "summary_large_image", title: vehicle.name, images: previewImage ? [previewImage] : undefined },
   };
 }
 
