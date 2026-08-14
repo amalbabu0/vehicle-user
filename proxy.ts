@@ -16,6 +16,13 @@ const PROTECTED_PATHS: string[] = [
   // "/enquiries", "/profile", "/settings" — added when built
 ];
 
+// WhatsApp's link-preview crawler identifies itself as "WhatsApp/2.x ..." —
+// matching the product token alone keeps this version-agnostic. Deliberately
+// narrow: Googlebot, facebookexternalhit, Telegram and every real browser miss
+// this and get the normal page with its full description intact.
+const WHATSAPP_CRAWLER = /WhatsApp/i;
+const VEHICLE_PATH = /^\/vehicles\/([^/]+)\/?$/;
+
 export async function proxy(request: NextRequest, event: NextFetchEvent) {
   // Some Supabase OAuth redirect configs land on "/" with ?code=... instead
   // of /auth/callback directly. Catching this here (not in app/page.tsx,
@@ -42,6 +49,22 @@ export async function proxy(request: NextRequest, event: NextFetchEvent) {
       status: 403,
       headers: { "content-type": "text/plain; charset=utf-8" },
     });
+  }
+
+  // Serve WhatsApp's crawler the photo-only twin of a vehicle page (see
+  // app/preview/vehicles/[slug]). A rewrite, not a redirect: the URL the
+  // recipient taps stays /vehicles/<slug>, and only the HTML behind this one
+  // fetch differs.
+  //
+  // Placed above the session lookup on purpose — a crawler has no cookies to
+  // refresh, so this skips a Supabase round trip per preview fetch. It also
+  // skips recordVisit, which is the intended behaviour: a link-preview fetch
+  // from a Meta datacenter isn't a visitor, and logging it would put Meta IPs
+  // in the admin's IP Logs page. Move this below the logging block if those
+  // fetches ever need to be counted.
+  const vehicleMatch = VEHICLE_PATH.exec(request.nextUrl.pathname);
+  if (vehicleMatch && WHATSAPP_CRAWLER.test(request.headers.get("user-agent") ?? "")) {
+    return NextResponse.rewrite(new URL(`/preview/vehicles/${vehicleMatch[1]}`, request.url));
   }
 
   let response = NextResponse.next({ request });
