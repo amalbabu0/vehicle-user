@@ -31,6 +31,12 @@ import { env } from "@/lib/env";
 
 export const revalidate = 120;
 
+/** Duplicated rather than imported: app/layout.tsx keeps its SITE_NAME
+ * private, and this route deliberately shares none of that file's metadata —
+ * importing it would invite someone to pull the site description along with
+ * it, which is exactly what this page exists to keep out. */
+const SITE_NAME = "Kerala Lease Hub";
+
 type PageProps = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -48,16 +54,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const canonicalUrl = `${env.SITE_URL}/vehicles/${vehicle.slug}`;
 
   return {
-    // No text label at all: og:title is simply not set below, and <title> —
-    // which crawlers fall back to when og:title is missing — is emptied here.
-    // `absolute` is what makes that stick: a plain empty string or null would
-    // still resolve through app/layout.tsx's `title.default`/`template` and
-    // come back as the site name, since a page without its own title inherits
-    // the closest parent's resolved one. absolute ignores the template.
+    // The site name, not the vehicle's — and NOT nothing, which is what this
+    // tried first and had to be walked back.
     //
-    // WhatsApp still renders the URL/domain line on the card — that part
-    // isn't ours to remove — but no vehicle name or spec reaches it.
-    title: { absolute: "" },
+    // Open Graph treats og:title, og:type, og:image and og:url as a required
+    // set. Serving og:image alone left an incomplete graph, and WhatsApp
+    // responded by discarding it and rendering no card whatsoever — the photo
+    // disappeared along with the text. A card needs a label to exist at all,
+    // so the question is only which label, and the site name carries no
+    // model, year, price, or location.
+    //
+    // `absolute` matters: a plain string here would run through
+    // app/layout.tsx's `title.template` and come back as
+    // "Kerala Lease Hub | Kerala Lease Hub".
+    title: { absolute: SITE_NAME },
     // Explicitly null, not merely omitted. Crawlers fall back to plain
     // <meta name="description"> when og:description is missing, and metadata
     // this route doesn't set is INHERITED from app/layout.tsx, which defines
@@ -70,16 +80,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     // duplicate of the real page — so it's noindex, pointing at the canonical.
     robots: { index: false, follow: false },
     alternates: { canonical: canonicalUrl },
-    // No `title` key in either block — and no og:site_name either, which a
-    // child openGraph gets for free by replacing the parent's wholesale
-    // (app/layout.tsx sets one), removing another label the card could latch
-    // onto. og:image:alt stays: it isn't rendered as card text, and stripping
-    // it would only cost screen-reader users the description of the photo.
+    // og:type is set explicitly for the same reason as og:title: it's part of
+    // the required set, and a child openGraph block replaces the parent's
+    // wholesale, so app/layout.tsx's `type: "website"` does NOT carry over
+    // here. Leaving it out was half of why the card vanished.
+    //
+    // og:description stays absent — that's the whole point of this route, and
+    // it isn't one of the required properties. og:image:alt stays too: it
+    // isn't rendered as card text, and dropping it would only cost
+    // screen-reader users the description of the photo.
     openGraph: {
+      type: "website",
+      title: SITE_NAME,
       url: canonicalUrl,
       images: previewImage ? [{ url: previewImage, alt: vehicle.name }] : undefined,
     },
-    twitter: { card: "summary_large_image", images: previewImage ? [previewImage] : undefined },
+    twitter: { card: "summary_large_image", title: SITE_NAME, images: previewImage ? [previewImage] : undefined },
   };
 }
 
