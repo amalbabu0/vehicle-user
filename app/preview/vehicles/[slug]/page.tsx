@@ -44,13 +44,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const vehicle = await getVehicleBySlug(slug);
   if (!vehicle) return { title: "Vehicle not found", robots: { index: false, follow: false } };
 
-  // The medium variant (1200px wide, see the admin upload route) rather than
-  // the original (up to 1920px): link previews degrade to a tiny thumbnail —
-  // or drop the image — once it exceeds the crawler's size cap, and medium
-  // bounds that across the whole catalog. Falls back to the original for
-  // listings uploaded before variants existed (admin migration 0019).
-  const coverMediumUrl = vehicle.images.find((image) => image.url === vehicle.coverImageUrl)?.mediumUrl;
-  const previewImage = coverMediumUrl ?? vehicle.coverImageUrl;
+  // The 1:1 crop from app/share-image/[slug], not a stored variant. Covers
+  // are portrait phone photos, and WhatsApp reshaping them is what made the
+  // shared card look unlike the square images listers post by hand. That
+  // route explains why neither `-medium` (source aspect) nor `-thumb`
+  // (square, but grey-barred) works here, and falls back to the stored cover
+  // if the crop fails, so this URL always resolves to some image.
+  //
+  // Absolute, not root-relative: metadataBase would resolve a relative one,
+  // but a crawler is the only consumer and an absolute URL removes the
+  // question entirely.
+  const previewImage = `${env.SITE_URL}/share-image/${vehicle.slug}`;
   const canonicalUrl = `${env.SITE_URL}/vehicles/${vehicle.slug}`;
 
   return {
@@ -93,9 +97,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type: "website",
       title: SITE_NAME,
       url: canonicalUrl,
-      images: previewImage ? [{ url: previewImage, alt: vehicle.name }] : undefined,
+      // width/height are declared so a crawler knows the card is square
+      // before it has finished fetching the bytes — several lay the preview
+      // out from these tags alone. They must keep matching SIZE in the
+      // share-image route.
+      images: [{ url: previewImage, alt: vehicle.name, width: 1080, height: 1080, type: "image/jpeg" }],
     },
-    twitter: { card: "summary_large_image", title: SITE_NAME, images: previewImage ? [previewImage] : undefined },
+    // summary_large_image is the closest Twitter/X card to a square photo;
+    // it crops to 2:1 there, which is X's layout, not something these tags
+    // control. WhatsApp — the only client actually routed here — has no such
+    // fixed shape and follows the image.
+    twitter: { card: "summary_large_image", title: SITE_NAME, images: [previewImage] },
   };
 }
 
