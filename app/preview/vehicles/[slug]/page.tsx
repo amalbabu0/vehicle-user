@@ -48,11 +48,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const canonicalUrl = `${env.SITE_URL}/vehicles/${vehicle.slug}`;
 
   return {
-    // The bare vehicle name, not the listing's SEO title: WhatsApp always
-    // renders a title line, falling back to <title> when og:title is absent,
-    // so a card with no text at all isn't reachable — the shortest
-    // identifying label is as close as it gets.
-    title: vehicle.name,
+    // No text label at all: og:title is simply not set below, and <title> —
+    // which crawlers fall back to when og:title is missing — is emptied here.
+    // `absolute` is what makes that stick: a plain empty string or null would
+    // still resolve through app/layout.tsx's `title.default`/`template` and
+    // come back as the site name, since a page without its own title inherits
+    // the closest parent's resolved one. absolute ignores the template.
+    //
+    // WhatsApp still renders the URL/domain line on the card — that part
+    // isn't ours to remove — but no vehicle name or spec reaches it.
+    title: { absolute: "" },
     // Explicitly null, not merely omitted. Crawlers fall back to plain
     // <meta name="description"> when og:description is missing, and metadata
     // this route doesn't set is INHERITED from app/layout.tsx, which defines
@@ -65,21 +70,28 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     // duplicate of the real page — so it's noindex, pointing at the canonical.
     robots: { index: false, follow: false },
     alternates: { canonical: canonicalUrl },
+    // No `title` key in either block — and no og:site_name either, which a
+    // child openGraph gets for free by replacing the parent's wholesale
+    // (app/layout.tsx sets one), removing another label the card could latch
+    // onto. og:image:alt stays: it isn't rendered as card text, and stripping
+    // it would only cost screen-reader users the description of the photo.
     openGraph: {
-      title: vehicle.name,
       url: canonicalUrl,
       images: previewImage ? [{ url: previewImage, alt: vehicle.name }] : undefined,
     },
-    twitter: { card: "summary_large_image", title: vehicle.name, images: previewImage ? [previewImage] : undefined },
+    twitter: { card: "summary_large_image", images: previewImage ? [previewImage] : undefined },
   };
 }
 
 /**
- * Body content is nearly irrelevant — the crawler reads the <head> and stops.
- * It's a real link rather than an empty page purely as a safety net: if a
- * User-Agent is ever misclassified as WhatsApp, whoever lands here sees the
- * vehicle name and a way through to the actual listing instead of a blank
- * screen.
+ * A bare link, and deliberately no vehicle name or heading anywhere in the
+ * body: with <title> emptied above, a crawler that wants a label has nothing
+ * in the <head> to take, and some fall back to on-page text (an <h1>) next.
+ * Leaving the name here would put it straight back on the card.
+ *
+ * It isn't an empty page purely as a safety net: if a User-Agent is ever
+ * misclassified as WhatsApp, whoever lands here gets a way through to the
+ * real listing instead of a blank screen.
  */
 export default async function VehicleSharePreviewPage({ params }: PageProps) {
   const { slug } = await params;
@@ -87,8 +99,7 @@ export default async function VehicleSharePreviewPage({ params }: PageProps) {
   if (!vehicle) notFound();
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
-      <h1 className="text-lg font-semibold">{vehicle.name}</h1>
+    <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
       <Link href={`/vehicles/${vehicle.slug}`} className="text-sm font-medium text-primary">
         View this listing on Kerala Lease Hub
       </Link>
