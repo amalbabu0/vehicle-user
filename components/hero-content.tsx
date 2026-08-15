@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Car, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HeroSearchForm } from "@/components/hero-search-form";
@@ -17,7 +18,32 @@ export function HeroContent({ districts, categories }: { districts: DistrictOpti
         aria-hidden
         className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_20%,color-mix(in_oklch,var(--primary),transparent_88%),transparent_55%),radial-gradient(circle_at_80%_0%,color-mix(in_oklch,var(--primary),transparent_92%),transparent_50%)]"
       />
-      <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
+
+      {/* Decorative brand mark filling the empty space beside the search
+          card on wide screens — hidden below lg where the content column
+          already fills the width. Two images (not one + CSS invert) so it
+          matches the exact light/dark artwork used everywhere else (see
+          navbar-client.tsx's identical dark:hidden/dark:block pairing). */}
+      <Image
+        src="/branding/logo-light.webp"
+        alt=""
+        aria-hidden
+        width={320}
+        height={320}
+        className="pointer-events-none absolute top-1/2 right-6 hidden size-64 -translate-y-1/2 object-contain opacity-90 lg:block dark:hidden xl:right-16 xl:size-80"
+        priority
+      />
+      <Image
+        src="/branding/logo-dark.webp"
+        alt=""
+        aria-hidden
+        width={320}
+        height={320}
+        className="pointer-events-none absolute top-1/2 right-6 hidden size-64 -translate-y-1/2 object-contain opacity-90 lg:dark:block xl:right-16 xl:size-80"
+        priority
+      />
+
+      <div className="relative mx-auto flex max-w-5xl flex-col items-center text-center">
         <h1 className="animate-in fade-in slide-in-from-bottom-4 duration-500 text-balance text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
           Kerala&apos;s vehicle leasing platform — cars, bikes &amp; more
         </h1>
