@@ -84,18 +84,20 @@ async function applyFilters(
     const safe = filters.q.replace(/[,()%]/g, " ").trim();
     if (safe) q = q.or(`name.ilike.%${safe}%,model.ilike.%${safe}%`);
   }
-  if (filters.brand) {
-    const id = await resolveBrandId(supabase, filters.brand);
-    q = q.eq("brand_id", id ?? NO_MATCH_ID);
-  }
-  if (filters.category) {
-    const id = await resolveCategoryId(supabase, filters.category);
-    q = q.eq("category_id", id ?? NO_MATCH_ID);
-  }
-  if (filters.district) {
-    const ids = await resolveDistrictLocationIds(supabase, filters.district);
-    q = ids.length ? q.in("location_id", ids) : q.eq("id", NO_MATCH_ID);
-  }
+
+  // Independent lookups (none depends on another's result) — resolved in
+  // parallel rather than one after another, since a visitor combining
+  // brand+category+district filters previously paid for three sequential
+  // round trips before the actual vehicles query could even start.
+  const [brandId, categoryId, districtIds] = await Promise.all([
+    filters.brand ? resolveBrandId(supabase, filters.brand) : Promise.resolve(undefined),
+    filters.category ? resolveCategoryId(supabase, filters.category) : Promise.resolve(undefined),
+    filters.district ? resolveDistrictLocationIds(supabase, filters.district) : Promise.resolve(undefined),
+  ]);
+
+  if (filters.brand) q = q.eq("brand_id", brandId ?? NO_MATCH_ID);
+  if (filters.category) q = q.eq("category_id", categoryId ?? NO_MATCH_ID);
+  if (filters.district) q = districtIds?.length ? q.in("location_id", districtIds) : q.eq("id", NO_MATCH_ID);
   if (filters.fuelType) q = q.eq("fuel_type", filters.fuelType);
   if (filters.transmission) q = q.eq("transmission", filters.transmission);
   if (filters.minPrice != null) q = q.gte("lease_amount", filters.minPrice);
