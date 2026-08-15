@@ -30,7 +30,7 @@ export function HeroContent({ districts, categories }: { districts: DistrictOpti
         aria-hidden
         width={320}
         height={320}
-        className="pointer-events-none absolute top-1/2 right-6 hidden size-64 -translate-y-1/2 object-contain opacity-90 lg:block dark:hidden xl:right-16 xl:size-80"
+        className="pointer-events-none absolute top-1/2 right-[calc(1.5rem+5cm)] hidden size-64 translate-y-[calc(-50%+5cm)] object-contain opacity-90 lg:block dark:hidden xl:right-[calc(4rem+5cm)] xl:size-80"
         priority
       />
       <Image
@@ -39,7 +39,7 @@ export function HeroContent({ districts, categories }: { districts: DistrictOpti
         aria-hidden
         width={320}
         height={320}
-        className="pointer-events-none absolute top-1/2 right-6 hidden size-64 -translate-y-1/2 object-contain opacity-90 lg:dark:block xl:right-16 xl:size-80"
+        className="pointer-events-none absolute top-1/2 right-[calc(1.5rem+5cm)] hidden size-64 translate-y-[calc(-50%+5cm)] object-contain opacity-90 lg:dark:block xl:right-[calc(4rem+5cm)] xl:size-80"
         priority
       />
 
