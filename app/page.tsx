@@ -2,13 +2,11 @@ import { Suspense } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Hero } from "@/components/hero";
-import { BrowseCategories } from "@/components/sections/browse-categories";
 import { LatestVehicles } from "@/components/sections/latest-vehicles";
 import { HowItWorks } from "@/components/sections/how-it-works";
 import { Testimonials } from "@/components/sections/testimonials";
 import { Faq } from "@/components/sections/faq";
 import { VehicleSectionSkeleton } from "@/components/sections/section-skeleton";
-import { BrowseCategoriesSkeleton } from "@/components/sections/browse-categories-skeleton";
 import { TestimonialsSkeleton } from "@/components/sections/testimonials-skeleton";
 import { FaqJsonLd } from "@/components/seo/faq-jsonld";
 
@@ -25,10 +23,6 @@ export default function HomePage() {
       <Navbar />
       <main>
         <Hero />
-
-        <Suspense fallback={<BrowseCategoriesSkeleton />}>
-          <BrowseCategories />
-        </Suspense>
 
         <Suspense fallback={<VehicleSectionSkeleton />}>
           <LatestVehicles />
